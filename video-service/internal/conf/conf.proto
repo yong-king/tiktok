@@ -1,0 +1,84 @@
+syntax = "proto3";
+package kratos.api;
+
+option go_package = "video-service/internal/conf;conf";
+
+import "google/protobuf/duration.proto";
+
+message Bootstrap {
+  Server server = 1;
+  Data data = 2;
+  JWT jwt = 3;
+  IDGen idGen = 4;
+  Registry registry = 5;
+  Service service = 6;
+}
+
+message Server {
+  message HTTP {
+    string network = 1;
+    string addr = 2;
+    google.protobuf.Duration timeout = 3;
+  }
+  message GRPC {
+    string network = 1;
+    string addr = 2;
+    google.protobuf.Duration timeout = 3;
+  }
+  message GIN {
+    int32 port = 1;
+  }
+  HTTP http = 1;
+  GRPC grpc = 2;
+  GIN gin = 3;
+}
+
+message Data {
+  message Database {
+    string driver = 1;
+    string source = 2;
+  }
+  message Redis {
+    string network = 1;
+    string addr = 2;
+    google.protobuf.Duration read_timeout = 3;
+    google.protobuf.Duration write_timeout = 4;
+  }
+  message MinIO {
+    string endpoint = 1;
+    string bucketName = 2;
+    string accessKeyID = 3;
+    string secretAccessKey = 4;
+    bool useSSL = 5;
+  }
+  message UserService {
+    string endpoint = 1;
+  }
+  Database database = 1;
+  Redis redis = 2;
+  MinIO minio = 3;
+  UserService user_service = 4;
+}
+
+message JWT {
+  string secret = 1;
+  string issuer = 2;
+  int64 expire = 3;
+}
+
+message IDGen {
+  uint32 machine_id = 1;
+  string start_time = 2;
+}
+
+message Registry {
+  message Consul {
+    string addr = 1;
+  }
+  Consul consul = 1;
+}
+
+message Service {
+  string name = 1;     // ✅ 服务名
+  string version = 2;  // ✅ 可选：版本
+}

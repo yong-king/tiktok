@@ -1,0 +1,498 @@
+# Generated with protoc-gen-openapi
+# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+
+openapi: 3.0.3
+info:
+    title: ""
+    version: 0.0.1
+paths:
+    /api/comment/create:
+        post:
+            tags:
+                - CommentService
+            operationId: CommentService_CreateComment
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/comment.CreateCommentRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/comment.CreateCommentReply'
+    /api/comment/get:
+        get:
+            tags:
+                - CommentService
+            operationId: CommentService_GetCommentList
+            parameters:
+                - name: token
+                  in: query
+                  schema:
+                    type: string
+                - name: refreshToken
+                  in: query
+                  schema:
+                    type: string
+                - name: videoId
+                  in: query
+                  schema:
+                    type: string
+                - name: page
+                  in: query
+                  schema:
+                    type: string
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/comment.GetCommentListReply'
+    /api/user:
+        get:
+            tags:
+                - UserService
+            operationId: UserService_UserInfo
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+                - name: currentUserId
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.UserInfoReply'
+    /api/user/check:
+        get:
+            tags:
+                - UserService
+            operationId: UserService_CheckUserExistByUserID
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.CheckUserExistByUserIDReply'
+    /api/user/login:
+        post:
+            tags:
+                - UserService
+            operationId: UserService_Login
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/user.LoginRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.LoginReply'
+    /api/user/register:
+        post:
+            tags:
+                - UserService
+            operationId: UserService_Register
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/user.RegisterRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.RegisterReply'
+    /api/video:
+        get:
+            tags:
+                - VideoService
+            description: 获取用户视频列表
+            operationId: VideoService_ListUserVideos
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+                - name: token
+                  in: query
+                  schema:
+                    type: string
+                - name: refreshToken
+                  in: query
+                  schema:
+                    type: string
+                - name: page
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: pageSize
+                  in: query
+                  schema:
+                    type: integer
+                    format: int32
+                - name: startTime
+                  in: query
+                  schema:
+                    type: string
+                    format: date-time
+                - name: endTime
+                  in: query
+                  schema:
+                    type: string
+                    format: date-time
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/video.ListUserVideosReply'
+    /api/video/create:
+        post:
+            tags:
+                - VideoService
+            description: 上传视频信息
+            operationId: VideoService_CreateVideo
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/video.CreateVideoRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/video.CreateVideoReply'
+    /api/video/upload:
+        post:
+            tags:
+                - VideoService
+            description: 上传视频
+            operationId: VideoService_UploadVideo
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/video.UploadVideoRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/video.UploadVideoReply'
+components:
+    schemas:
+        comment.Comment:
+            type: object
+            properties:
+                id:
+                    type: string
+                userId:
+                    type: string
+                videoId:
+                    type: string
+                parentId:
+                    type: string
+                content:
+                    type: string
+                createdAt:
+                    type: string
+                    format: date-time
+        comment.CreateCommentReply:
+            type: object
+            properties:
+                commentId:
+                    type: string
+                msg:
+                    type: string
+        comment.CreateCommentRequest:
+            type: object
+            properties:
+                actionType:
+                    type: integer
+                    format: int32
+                parentId:
+                    type: string
+                videoId:
+                    type: string
+                commentId:
+                    type: string
+                token:
+                    type: string
+                refreshToken:
+                    type: string
+                content:
+                    type: string
+            description: 创建评论
+        comment.GetCommentListReply:
+            type: object
+            properties:
+                comments:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/comment.Comment'
+        user.CheckUserExistByUserIDReply:
+            type: object
+            properties:
+                exist:
+                    type: boolean
+        user.LoginReply:
+            type: object
+            properties:
+                statusCode:
+                    type: integer
+                    format: int32
+                statusMsg:
+                    type: string
+                userId:
+                    type: string
+                token:
+                    type: string
+                refreshToken:
+                    type: string
+        user.LoginRequest:
+            type: object
+            properties:
+                username:
+                    type: string
+                password:
+                    type: string
+            description: ==========================用户登录============================
+        user.RegisterReply:
+            type: object
+            properties:
+                statusCode:
+                    type: integer
+                    format: int32
+                statusMsg:
+                    type: string
+                userId:
+                    type: string
+                token:
+                    type: string
+        user.RegisterRequest:
+            type: object
+            properties:
+                username:
+                    type: string
+                password:
+                    type: string
+        user.User:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                followCount:
+                    type: integer
+                    format: int32
+                followerCount:
+                    type: integer
+                    format: int32
+                isFollow:
+                    type: boolean
+                avatar:
+                    type: string
+                backgroundImage:
+                    type: string
+                signature:
+                    type: string
+                totalFavorited:
+                    type: integer
+                    format: int32
+                workCount:
+                    type: integer
+                    format: int32
+                favoriteCount:
+                    type: integer
+                    format: int32
+        user.UserInfoReply:
+            type: object
+            properties:
+                statusCode:
+                    type: integer
+                    format: int32
+                statusMsg:
+                    type: string
+                user:
+                    $ref: '#/components/schemas/user.User'
+        video.CreateVideoReply:
+            type: object
+            properties:
+                videoId:
+                    type: string
+        video.CreateVideoRequest:
+            type: object
+            properties:
+                title:
+                    type: string
+                description:
+                    type: string
+                playUrl:
+                    type: string
+                coverUrl:
+                    type: string
+                duration:
+                    type: number
+                    format: float
+                tags:
+                    type: string
+                isPublic:
+                    type: boolean
+                isOriginal:
+                    type: boolean
+                sourceUrl:
+                    type: string
+                token:
+                    type: string
+                refreshToken:
+                    type: string
+            description: 创建视频信息
+        video.ListUserVideosReply:
+            type: object
+            properties:
+                videos:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/video.Video'
+                total:
+                    type: integer
+                    format: int32
+                currentPage:
+                    type: integer
+                    format: int32
+                pageSize:
+                    type: integer
+                    format: int32
+        video.UploadVideoReply:
+            type: object
+            properties:
+                playUrl:
+                    type: string
+                coverUrl:
+                    type: string
+                duration:
+                    type: number
+                    format: float
+                message:
+                    type: string
+                videoId:
+                    type: string
+        video.UploadVideoRequest:
+            type: object
+            properties:
+                data:
+                    type: string
+                    format: bytes
+                filename:
+                    type: string
+                token:
+                    type: string
+                refreshToken:
+                    type: string
+            description: 上传视频
+        video.Video:
+            type: object
+            properties:
+                id:
+                    type: string
+                userId:
+                    type: string
+                playUrl:
+                    type: string
+                coverUrl:
+                    type: string
+                title:
+                    type: string
+                description:
+                    type: string
+                duration:
+                    type: number
+                    format: float
+                tags:
+                    type: string
+                favoriteCnt:
+                    type: integer
+                    format: int32
+                commentCnt:
+                    type: integer
+                    format: int32
+                shareCnt:
+                    type: integer
+                    format: int32
+                collectCnt:
+                    type: integer
+                    format: int32
+                isPublic:
+                    type: boolean
+                auditStatus:
+                    type: integer
+                    format: int32
+                isOriginal:
+                    type: boolean
+                sourceUrl:
+                    type: string
+                transcodeStatus:
+                    type: integer
+                    format: int32
+                videoWidth:
+                    type: integer
+                    format: int32
+                videoHeight:
+                    type: integer
+                    format: int32
+                bizExt:
+                    type: string
+                reserved1:
+                    type: string
+                reserved2:
+                    type: string
+                createdAt:
+                    type: string
+                    format: date-time
+                updateTime:
+                    type: string
+                    format: date-time
+                deleteAt:
+                    type: string
+                    format: date-time
+tags:
+    - name: CommentService
+    - name: UserService
+    - name: VideoService

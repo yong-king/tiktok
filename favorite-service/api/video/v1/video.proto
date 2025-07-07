@@ -1,0 +1,133 @@
+syntax = "proto3";
+package video;
+option go_package = "user/api/v1;v1";
+
+import "google/api/annotations.proto";
+import "google/protobuf/timestamp.proto";
+
+service VideoService {
+  // 上传视频信息
+  rpc CreateVideo (CreateVideoRequest) returns (CreateVideoReply) {
+    option (google.api.http) = {
+      post: "/api/video/create",
+      body: "*",
+    };
+  };
+
+  // 获取用户视频列表
+  rpc ListUserVideos (ListUserVideosRequest) returns (ListUserVideosReply) {
+    option (google.api.http) = {
+      get: "/api/video"
+    };
+  }
+
+  // 上传视频
+  rpc UploadVideo (UploadVideoRequest) returns (UploadVideoReply) {
+    option (google.api.http) = {
+      post: "/api/video/upload"
+      body: "*"
+    };
+  }
+
+  // 批量获取视频信息
+  rpc BatchGetVideoInfo(BatchGetVideoInfoRequest) returns (BatchGetVideoInfoReply);
+}
+
+// 批量获取视频信息
+message BatchGetVideoInfoRequest {
+  repeated int64 ids = 1;
+  int32 page = 2;
+  int32 pageSize = 3;
+}
+
+message BatchGetVideoInfoReply {
+  repeated Video videos = 1;
+}
+
+// 上传视频
+message UploadVideoRequest {
+  bytes data = 1;             // 视频二进制流（注意grpc限制，推荐分片或前端直传OSS）
+  string filename = 2;        // 文件名（带后缀）
+  string token = 3;           // 用户认证token
+  string refreshToken = 4;
+}
+
+message UploadVideoReply {
+  string play_url = 1;        // 视频播放地址（存储服务返回）
+  string cover_url = 2;       // 视频封面地址（可能为空，后台异步生成后更新）
+  float duration = 3;         // 视频时长（秒）
+  string message = 4;         // 额外信息
+  int64 video_id = 5; // 如果已生成数据库记录，可返回
+}
+
+// 创建视频信息
+message CreateVideoRequest {
+  string title = 1;
+  string description = 2;
+  string play_url = 3;
+  string cover_url = 4;
+  float duration = 5;
+  string tags = 6;
+  bool is_public = 7;
+  bool is_original = 8;
+  string source_url = 9; // 原始视频来源（如转载，is_original 为 false 时使用）
+  string token = 10; // JWT 或其它认证方式
+  string refreshToken = 11;
+}
+
+message CreateVideoReply {
+  int64 video_id = 1;
+}
+
+// 获取视频信息
+message ListUserVideosRequest {
+  int64 user_id = 1;
+  string token = 2;
+  string refreshToken = 3;
+  int32 page = 4;
+  int32 page_size = 5;
+
+  google.protobuf.Timestamp start_time = 6;
+  google.protobuf.Timestamp end_time = 7;
+}
+
+message ListUserVideosReply {
+  repeated Video videos = 1;
+  int32 total = 2; // 总视频数
+  int32 current_page = 3;
+  int32 page_size = 4;
+
+}
+
+message Video {
+  int64 id = 1;
+  int64 user_id = 2;
+  string play_url = 3;
+  string cover_url = 4;
+  string title = 5;
+  string description = 6;
+  float duration = 7;
+  string tags = 8;
+
+  int32 favorite_cnt = 9;
+  int32 comment_cnt = 10;
+  int32 share_cnt = 11;
+  int32 collect_cnt = 12;
+
+  bool is_public = 13;
+  int32 audit_status = 14;
+  bool is_original = 15;
+  string source_url = 16;
+  int32 transcode_status = 17;
+
+  int32 video_width = 18;
+  int32 video_height = 19;
+
+  string biz_ext = 20;
+  string reserved_1 = 21;
+  string reserved_2 = 22;
+
+  google.protobuf.Timestamp created_at = 23;
+  google.protobuf.Timestamp update_time = 24;
+  google.protobuf.Timestamp delete_at = 25;
+}

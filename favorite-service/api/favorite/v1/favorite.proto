@@ -1,0 +1,53 @@
+syntax = "proto3";
+package favorite;
+option go_package = "favorite/api/v1;v1";
+
+import "google/api/annotations.proto";
+
+service FavoriteService {
+  rpc FavoriteAction(FavoriteActionRequest) returns (FavoriteActionReply) {
+    option (google.api.http) = {
+      post: "/api/favorite/action"
+      body: "*"
+    };
+  }
+
+  rpc GetUserFavoriteVideoList (GetUserFavoriteVideoListRequest) returns (GetUserFavoriteVideoListReply) {
+    option (google.api.http) = {
+      get: "/api/favorite/videos"
+    };
+  }
+}
+
+message FavoriteActionRequest {
+  string token = 1;
+  string refreshToken = 2;
+  int64 video_id = 3;
+  int32 action_type = 4; // 1：点赞， 2： 取消
+}
+
+message FavoriteActionReply {
+  string message = 1;
+}
+
+message GetUserFavoriteVideoListRequest {
+  int64 target_user_id = 1;
+  string token = 2;
+  string refresh_token = 3;
+  int32 page = 4;
+  int32 limit = 5;
+}
+
+message GetUserFavoriteVideoListReply {
+  repeated Video videos = 1;
+}
+
+message Video {
+  int64 video_id = 1;
+  string title = 2;
+  string cover_url = 3;
+  int64 author_id = 4;
+  int64 like_count = 5;
+  int64 comment_count = 6;
+  int64 publish_time = 7;
+}

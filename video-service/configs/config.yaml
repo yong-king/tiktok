@@ -1,0 +1,38 @@
+server:
+  http:
+    addr: 0.0.0.0:8081
+    timeout: 1s
+  grpc:
+    addr: 0.0.0.0:9091
+    timeout: 1s
+  gin:
+    port: 8090
+data:
+  database:
+    driver: mysql
+    source: root:root@tcp(127.0.0.1:3306)/tiktok?parseTime=True&loc=Local
+  redis:
+    addr: 127.0.0.1:6379
+    read_timeout: 0.2s
+    write_timeout: 0.2s
+  minio:
+    endpoint: 127.0.0.1:9000
+    bucketName: video-files
+    accessKeyID: admin
+    secretAccessKey: admin123
+    useSSL: false
+  user_service:
+    endpoint: discovery:///user-service
+jwt:
+  secret: "youngking98"
+  issuer: "video-service"
+  expire: 86400
+idGen:
+  machine_id: 2
+  start_time: "2025-01-01T00:00:00Z"
+registry:
+  consul:
+    addr: 127.0.0.1:8500
+service:
+  name: video-service
+  version: v1.0.0

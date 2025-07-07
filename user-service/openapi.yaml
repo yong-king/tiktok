@@ -1,0 +1,172 @@
+# Generated with protoc-gen-openapi
+# https://github.com/google/gnostic/tree/master/cmd/protoc-gen-openapi
+
+openapi: 3.0.3
+info:
+    title: UserService API
+    version: 0.0.1
+paths:
+    /api/user:
+        get:
+            tags:
+                - UserService
+            operationId: UserService_UserInfo
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+                - name: currentUserId
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.UserInfoReply'
+    /api/user/check:
+        get:
+            tags:
+                - UserService
+            operationId: UserService_CheckUserExistByUserID
+            parameters:
+                - name: userId
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.CheckUserExistByUserIDReply'
+    /api/user/login:
+        post:
+            tags:
+                - UserService
+            operationId: UserService_Login
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/user.LoginRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.LoginReply'
+    /api/user/register:
+        post:
+            tags:
+                - UserService
+            operationId: UserService_Register
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/user.RegisterRequest'
+                required: true
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/user.RegisterReply'
+components:
+    schemas:
+        user.CheckUserExistByUserIDReply:
+            type: object
+            properties:
+                exist:
+                    type: boolean
+        user.LoginReply:
+            type: object
+            properties:
+                statusCode:
+                    type: integer
+                    format: int32
+                statusMsg:
+                    type: string
+                userId:
+                    type: string
+                token:
+                    type: string
+                refreshToken:
+                    type: string
+        user.LoginRequest:
+            type: object
+            properties:
+                username:
+                    type: string
+                password:
+                    type: string
+            description: ==========================用户登录============================
+        user.RegisterReply:
+            type: object
+            properties:
+                statusCode:
+                    type: integer
+                    format: int32
+                statusMsg:
+                    type: string
+                userId:
+                    type: string
+                token:
+                    type: string
+        user.RegisterRequest:
+            type: object
+            properties:
+                username:
+                    type: string
+                password:
+                    type: string
+        user.User:
+            type: object
+            properties:
+                id:
+                    type: string
+                name:
+                    type: string
+                followCount:
+                    type: integer
+                    format: int32
+                followerCount:
+                    type: integer
+                    format: int32
+                isFollow:
+                    type: boolean
+                avatar:
+                    type: string
+                backgroundImage:
+                    type: string
+                signature:
+                    type: string
+                totalFavorited:
+                    type: integer
+                    format: int32
+                workCount:
+                    type: integer
+                    format: int32
+                favoriteCount:
+                    type: integer
+                    format: int32
+        user.UserInfoReply:
+            type: object
+            properties:
+                statusCode:
+                    type: integer
+                    format: int32
+                statusMsg:
+                    type: string
+                user:
+                    $ref: '#/components/schemas/user.User'
+tags:
+    - name: UserService
