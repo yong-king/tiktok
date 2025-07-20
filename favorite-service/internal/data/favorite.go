@@ -7,7 +7,10 @@ import (
 	pbVideo "favorite-service/api/video/v1"
 	"favorite-service/internal/data/model"
 	"favorite-service/internal/data/query"
+	"fmt"
+	"github.com/redis/go-redis/v9"
 	"gorm.io/gorm"
+	"time"
 
 	"favorite-service/internal/biz"
 
@@ -41,7 +44,20 @@ func (r *favoriteRepo) ParseToken(ctx context.Context, token string, refreshToke
 
 // AddFavorite 视频点赞
 func (r *favoriteRepo) AddFavorite(ctx context.Context, uid int64, vid int64) error {
-	return r.data.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+
+	// 1. 幂等，防止重复点赞
+	keyUserFavorite := fmt.Sprintf("favorite:user:%d", uid)
+	isMember, err := r.checkUserHaveFavorite(ctx, keyUserFavorite, vid)
+	if err != nil {
+		r.log.WithContext(ctx).Errorf("Redis SIsMember error for uid=%d, vid=%d: %v", uid, vid, err)
+		// 出错时仍继续走 DB 检查，保证正确性
+	}
+	if isMember {
+		return nil
+	}
+
+	// 数据库事务
+	err = r.data.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		txQuery := query.Use(tx)
 
 		// 防止重复点赞
@@ -69,35 +85,155 @@ func (r *favoriteRepo) AddFavorite(ctx context.Context, uid int64, vid int64) er
 		if err != nil {
 			return err
 		}
-
 		return nil
-
 	})
+	if err != nil {
+		return err
+	}
+
+	// 写入redis
+	// 将 vid 加入用户点赞集合
+	if err := r.data.rdb.SAdd(ctx, keyUserFavorite, vid).Err(); err != nil {
+		r.log.WithContext(ctx).Errorf("Redis SAdd error for uid=%d, vid=%d: %v", uid, vid, err)
+		return err
+	}
+
+	// 视频点赞数自增
+	keyVideoFavorite := fmt.Sprintf("video:favorite:%d", vid)
+
+	// 检查是否存在，若不存在则从 DB 回填
+	err = r.checkVidoeFavoriteInCache(ctx, keyVideoFavorite, vid)
+	if err != nil {
+		r.log.WithContext(ctx).Errorf("checkVideoFavoriteInCache error for vid=%d: %v", vid, err)
+		return err
+	}
+	if err := r.data.rdb.Incr(ctx, keyVideoFavorite).Err(); err != nil {
+		r.log.WithContext(ctx).Errorf("Redis Incr error for vid=%d: %v", vid, err)
+		return err
+	}
+
+	err = r.UpdateVideoScoreAfterLike(ctx, vid)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 // RemoveFavorite 取消点赞
 func (r *favoriteRepo) RemoveFavorite(ctx context.Context, uid int64, vid int64) error {
-	return r.data.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
+
+	// 数据库事务操作
+	err := r.data.db.WithContext(ctx).Transaction(func(tx *gorm.DB) error {
 		txQuery := query.Use(tx)
 
 		// 取消点赞 favorite
-		if _, err := txQuery.Favorite.
+		result, err := txQuery.Favorite.
 			WithContext(ctx).
 			Where(txQuery.Favorite.UserID.Eq(uid), txQuery.Favorite.VideoID.Eq(vid)).
-			Delete(); err != nil {
+			Delete()
+		if err != nil {
 			return err
+		}
+		if result.RowsAffected == 0 {
+			return nil // 幂等
 		}
 
 		// video
-		if _, err := txQuery.Video.
+		result, err = txQuery.Video.
 			WithContext(ctx).
 			Where(txQuery.Video.ID.Eq(vid)).
-			UpdateSimple(txQuery.Video.FavoriteCnt.Sub(1)); err != nil {
+			UpdateSimple(txQuery.Video.FavoriteCnt.Sub(1))
+		if err != nil {
 			return err
 		}
-
+		if result.RowsAffected == 0 {
+			return errors.New("video not found or favorite count is 0")
+		}
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	// 同步更新redis
+	keyUserFavorite := fmt.Sprintf("favorite:user:%d", uid)
+	if err := r.data.rdb.SRem(ctx, keyUserFavorite, vid).Err(); err != nil {
+		r.log.WithContext(ctx).Errorf("Redis SRem error for uid=%d, vid=%d: %v", uid, vid, err)
+		return err
+	}
+
+	keyVideoFavorite := fmt.Sprintf("video:favorite:%d", vid)
+	err = r.checkVidoeFavoriteInCache(ctx, keyVideoFavorite, vid)
+	if err != nil {
+		r.log.WithContext(ctx).Errorf("Redis SIsMember error: %v", err)
+		return err
+	}
+	if err := r.data.rdb.Decr(ctx, keyVideoFavorite).Err(); err != nil {
+		r.log.WithContext(ctx).Errorf("Redis Decr error: %v", err)
+		return err
+	}
+
+	err = r.UpdateVideoScoreAfterLike(ctx, vid)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// UpdateVideoScoreAfterLike 更新分数
+func (r *favoriteRepo) UpdateVideoScoreAfterLike(ctx context.Context, videoID int64) error {
+	video, err := r.data.VideoClient.GetVideoFavoriteAndCommentCount(ctx, &pbVideo.GetVideoFavoriteAndCommentCountRequest{VideoId: videoID}) // 获取点赞数、评论数、上传时间
+	if err != nil {
+		r.log.Errorf("GetVideo error: %v", err)
+		return err
+	}
+	score, err := r.data.VideoClient.CalcVideoScore(ctx, &pbVideo.CalcVideoScoreRequest{
+		FavoriteCount: video.FavoriteCount,
+		CommentCount:  video.CommentCount,
+		UploadTime:    video.UploadTime,
+	})
+	if err != nil {
+		r.log.Errorf("CalcVideoScore error: %v", err)
+		return err
+	}
+	err = r.data.rdb.ZAdd(ctx, "video:score", redis.Z{
+		Score:  float64(score.Score),
+		Member: videoID,
+	}).Err()
+	if err != nil {
+		r.log.Errorf("ZAdd video:score error: %v", err)
+		return err
+	}
+	return nil
+}
+
+// checkUserHaveFavorite 是否已经点赞
+func (r *favoriteRepo) checkUserHaveFavorite(ctx context.Context, keyUserFavorite string, vid int64) (bool, error) {
+	return r.data.rdb.SIsMember(ctx, keyUserFavorite, vid).Result()
+}
+
+// 是否有点赞在缓存中
+func (r *favoriteRepo) checkVidoeFavoriteInCache(ctx context.Context, keyVideoFavorite string, vid int64) error {
+	val, err := r.data.rdb.Exists(ctx, keyVideoFavorite).Result()
+	if err != nil {
+		r.log.WithContext(ctx).Errorf("Redis Exists error: %v", err)
+		return err
+	}
+	if val == 0 {
+		// Redis 不存在，回源 DB
+		var cnt int64
+		err = r.data.query.WithContext(ctx).Video.Where(query.Video.ID.Eq(vid)).Select(query.Video.FavoriteCnt).Scan(&cnt)
+		if err != nil {
+			return err
+		}
+		err = r.data.rdb.Set(ctx, keyVideoFavorite, cnt, 24*time.Hour).Err()
+		if err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // IsFavorited 幂等，防止重复点赞

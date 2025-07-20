@@ -19,10 +19,13 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	VideoService_CreateVideo_FullMethodName       = "/video.VideoService/CreateVideo"
-	VideoService_ListUserVideos_FullMethodName    = "/video.VideoService/ListUserVideos"
-	VideoService_UploadVideo_FullMethodName       = "/video.VideoService/UploadVideo"
-	VideoService_BatchGetVideoInfo_FullMethodName = "/video.VideoService/BatchGetVideoInfo"
+	VideoService_CreateVideo_FullMethodName                     = "/video.VideoService/CreateVideo"
+	VideoService_ListUserVideos_FullMethodName                  = "/video.VideoService/ListUserVideos"
+	VideoService_UploadVideo_FullMethodName                     = "/video.VideoService/UploadVideo"
+	VideoService_BatchGetVideoInfo_FullMethodName               = "/video.VideoService/BatchGetVideoInfo"
+	VideoService_CheckVideoExists_FullMethodName                = "/video.VideoService/CheckVideoExists"
+	VideoService_CalcVideoScore_FullMethodName                  = "/video.VideoService/CalcVideoScore"
+	VideoService_GetVideoFavoriteAndCommentCount_FullMethodName = "/video.VideoService/GetVideoFavoriteAndCommentCount"
 )
 
 // VideoServiceClient is the client API for VideoService service.
@@ -37,6 +40,10 @@ type VideoServiceClient interface {
 	UploadVideo(ctx context.Context, in *UploadVideoRequest, opts ...grpc.CallOption) (*UploadVideoReply, error)
 	// 批量获取视频信息
 	BatchGetVideoInfo(ctx context.Context, in *BatchGetVideoInfoRequest, opts ...grpc.CallOption) (*BatchGetVideoInfoReply, error)
+	// 检查视频是否存在
+	CheckVideoExists(ctx context.Context, in *CheckVideoExistsRequest, opts ...grpc.CallOption) (*CheckVideoExistsReply, error)
+	CalcVideoScore(ctx context.Context, in *CalcVideoScoreRequest, opts ...grpc.CallOption) (*CalcVideoScoreReply, error)
+	GetVideoFavoriteAndCommentCount(ctx context.Context, in *GetVideoFavoriteAndCommentCountRequest, opts ...grpc.CallOption) (*GetVideoFavoriteAndCommentCountReply, error)
 }
 
 type videoServiceClient struct {
@@ -87,6 +94,36 @@ func (c *videoServiceClient) BatchGetVideoInfo(ctx context.Context, in *BatchGet
 	return out, nil
 }
 
+func (c *videoServiceClient) CheckVideoExists(ctx context.Context, in *CheckVideoExistsRequest, opts ...grpc.CallOption) (*CheckVideoExistsReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CheckVideoExistsReply)
+	err := c.cc.Invoke(ctx, VideoService_CheckVideoExists_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *videoServiceClient) CalcVideoScore(ctx context.Context, in *CalcVideoScoreRequest, opts ...grpc.CallOption) (*CalcVideoScoreReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CalcVideoScoreReply)
+	err := c.cc.Invoke(ctx, VideoService_CalcVideoScore_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *videoServiceClient) GetVideoFavoriteAndCommentCount(ctx context.Context, in *GetVideoFavoriteAndCommentCountRequest, opts ...grpc.CallOption) (*GetVideoFavoriteAndCommentCountReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetVideoFavoriteAndCommentCountReply)
+	err := c.cc.Invoke(ctx, VideoService_GetVideoFavoriteAndCommentCount_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // VideoServiceServer is the server API for VideoService service.
 // All implementations must embed UnimplementedVideoServiceServer
 // for forward compatibility.
@@ -99,6 +136,10 @@ type VideoServiceServer interface {
 	UploadVideo(context.Context, *UploadVideoRequest) (*UploadVideoReply, error)
 	// 批量获取视频信息
 	BatchGetVideoInfo(context.Context, *BatchGetVideoInfoRequest) (*BatchGetVideoInfoReply, error)
+	// 检查视频是否存在
+	CheckVideoExists(context.Context, *CheckVideoExistsRequest) (*CheckVideoExistsReply, error)
+	CalcVideoScore(context.Context, *CalcVideoScoreRequest) (*CalcVideoScoreReply, error)
+	GetVideoFavoriteAndCommentCount(context.Context, *GetVideoFavoriteAndCommentCountRequest) (*GetVideoFavoriteAndCommentCountReply, error)
 	mustEmbedUnimplementedVideoServiceServer()
 }
 
@@ -120,6 +161,15 @@ func (UnimplementedVideoServiceServer) UploadVideo(context.Context, *UploadVideo
 }
 func (UnimplementedVideoServiceServer) BatchGetVideoInfo(context.Context, *BatchGetVideoInfoRequest) (*BatchGetVideoInfoReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BatchGetVideoInfo not implemented")
+}
+func (UnimplementedVideoServiceServer) CheckVideoExists(context.Context, *CheckVideoExistsRequest) (*CheckVideoExistsReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CheckVideoExists not implemented")
+}
+func (UnimplementedVideoServiceServer) CalcVideoScore(context.Context, *CalcVideoScoreRequest) (*CalcVideoScoreReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method CalcVideoScore not implemented")
+}
+func (UnimplementedVideoServiceServer) GetVideoFavoriteAndCommentCount(context.Context, *GetVideoFavoriteAndCommentCountRequest) (*GetVideoFavoriteAndCommentCountReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetVideoFavoriteAndCommentCount not implemented")
 }
 func (UnimplementedVideoServiceServer) mustEmbedUnimplementedVideoServiceServer() {}
 func (UnimplementedVideoServiceServer) testEmbeddedByValue()                      {}
@@ -214,6 +264,60 @@ func _VideoService_BatchGetVideoInfo_Handler(srv interface{}, ctx context.Contex
 	return interceptor(ctx, in, info, handler)
 }
 
+func _VideoService_CheckVideoExists_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckVideoExistsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VideoServiceServer).CheckVideoExists(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VideoService_CheckVideoExists_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VideoServiceServer).CheckVideoExists(ctx, req.(*CheckVideoExistsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VideoService_CalcVideoScore_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CalcVideoScoreRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VideoServiceServer).CalcVideoScore(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VideoService_CalcVideoScore_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VideoServiceServer).CalcVideoScore(ctx, req.(*CalcVideoScoreRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _VideoService_GetVideoFavoriteAndCommentCount_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetVideoFavoriteAndCommentCountRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(VideoServiceServer).GetVideoFavoriteAndCommentCount(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: VideoService_GetVideoFavoriteAndCommentCount_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(VideoServiceServer).GetVideoFavoriteAndCommentCount(ctx, req.(*GetVideoFavoriteAndCommentCountRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // VideoService_ServiceDesc is the grpc.ServiceDesc for VideoService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -236,6 +340,18 @@ var VideoService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BatchGetVideoInfo",
 			Handler:    _VideoService_BatchGetVideoInfo_Handler,
+		},
+		{
+			MethodName: "CheckVideoExists",
+			Handler:    _VideoService_CheckVideoExists_Handler,
+		},
+		{
+			MethodName: "CalcVideoScore",
+			Handler:    _VideoService_CalcVideoScore_Handler,
+		},
+		{
+			MethodName: "GetVideoFavoriteAndCommentCount",
+			Handler:    _VideoService_GetVideoFavoriteAndCommentCount_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
