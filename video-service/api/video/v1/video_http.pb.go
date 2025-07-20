@@ -20,12 +20,14 @@ var _ = binding.EncodeURL
 const _ = http.SupportPackageIsVersion1
 
 const OperationVideoServiceCreateVideo = "/video.VideoService/CreateVideo"
+const OperationVideoServiceGetVideoByTitle = "/video.VideoService/GetVideoByTitle"
 const OperationVideoServiceListUserVideos = "/video.VideoService/ListUserVideos"
 const OperationVideoServiceUploadVideo = "/video.VideoService/UploadVideo"
 
 type VideoServiceHTTPServer interface {
 	// CreateVideo 上传视频信息
 	CreateVideo(context.Context, *CreateVideoRequest) (*CreateVideoReply, error)
+	GetVideoByTitle(context.Context, *GetVideoByTitleRequest) (*GetVideoByTitleReply, error)
 	// ListUserVideos 获取用户视频列表
 	ListUserVideos(context.Context, *ListUserVideosRequest) (*ListUserVideosReply, error)
 	// UploadVideo 上传视频
@@ -37,6 +39,7 @@ func RegisterVideoServiceHTTPServer(s *http.Server, srv VideoServiceHTTPServer) 
 	r.POST("/api/video/create", _VideoService_CreateVideo0_HTTP_Handler(srv))
 	r.GET("/api/video", _VideoService_ListUserVideos0_HTTP_Handler(srv))
 	r.POST("/api/video/upload", _VideoService_UploadVideo0_HTTP_Handler(srv))
+	r.GET("/api/video/get/title", _VideoService_GetVideoByTitle0_HTTP_Handler(srv))
 }
 
 func _VideoService_CreateVideo0_HTTP_Handler(srv VideoServiceHTTPServer) func(ctx http.Context) error {
@@ -102,8 +105,28 @@ func _VideoService_UploadVideo0_HTTP_Handler(srv VideoServiceHTTPServer) func(ct
 	}
 }
 
+func _VideoService_GetVideoByTitle0_HTTP_Handler(srv VideoServiceHTTPServer) func(ctx http.Context) error {
+	return func(ctx http.Context) error {
+		var in GetVideoByTitleRequest
+		if err := ctx.BindQuery(&in); err != nil {
+			return err
+		}
+		http.SetOperation(ctx, OperationVideoServiceGetVideoByTitle)
+		h := ctx.Middleware(func(ctx context.Context, req interface{}) (interface{}, error) {
+			return srv.GetVideoByTitle(ctx, req.(*GetVideoByTitleRequest))
+		})
+		out, err := h(ctx, &in)
+		if err != nil {
+			return err
+		}
+		reply := out.(*GetVideoByTitleReply)
+		return ctx.Result(200, reply)
+	}
+}
+
 type VideoServiceHTTPClient interface {
 	CreateVideo(ctx context.Context, req *CreateVideoRequest, opts ...http.CallOption) (rsp *CreateVideoReply, err error)
+	GetVideoByTitle(ctx context.Context, req *GetVideoByTitleRequest, opts ...http.CallOption) (rsp *GetVideoByTitleReply, err error)
 	ListUserVideos(ctx context.Context, req *ListUserVideosRequest, opts ...http.CallOption) (rsp *ListUserVideosReply, err error)
 	UploadVideo(ctx context.Context, req *UploadVideoRequest, opts ...http.CallOption) (rsp *UploadVideoReply, err error)
 }
@@ -123,6 +146,19 @@ func (c *VideoServiceHTTPClientImpl) CreateVideo(ctx context.Context, in *Create
 	opts = append(opts, http.Operation(OperationVideoServiceCreateVideo))
 	opts = append(opts, http.PathTemplate(pattern))
 	err := c.cc.Invoke(ctx, "POST", path, in, &out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return &out, nil
+}
+
+func (c *VideoServiceHTTPClientImpl) GetVideoByTitle(ctx context.Context, in *GetVideoByTitleRequest, opts ...http.CallOption) (*GetVideoByTitleReply, error) {
+	var out GetVideoByTitleReply
+	pattern := "/api/video/get/title"
+	path := binding.EncodeURL(pattern, in, true)
+	opts = append(opts, http.Operation(OperationVideoServiceGetVideoByTitle))
+	opts = append(opts, http.PathTemplate(pattern))
+	err := c.cc.Invoke(ctx, "GET", path, nil, &out, opts...)
 	if err != nil {
 		return nil, err
 	}

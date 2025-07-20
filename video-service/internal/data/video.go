@@ -2,10 +2,15 @@ package data
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/elastic/go-elasticsearch/v8/typedapi/types"
+	"github.com/redis/go-redis/v9"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gorm.io/gorm"
 	"io"
+	"math"
+	"time"
 	pbUser "video-service/api/user/v1"
 	v1 "video-service/api/video/v1"
 	"video-service/internal/biz/params"
@@ -94,13 +99,47 @@ func (r *videoRepo) CreateVideo(ctx context.Context, in *params.CreateVideoReq) 
 		video.BizExt = "{}"
 	}
 
+	// 1. 保存到sql
 	err := r.data.query.Video.
 		WithContext(ctx).Omit(r.data.query.Video.DeleteAt).Create(video)
 	if err != nil {
 		r.log.Errorf("Create video err :%v", err)
 		return 0, err
 	}
+
+	// 2. 保存到redis
+	key := fmt.Sprintf("video:%d", video.ID)
+	videoJson, err := json.Marshal(video)
+	if err != nil {
+		r.log.Errorf("Create video json err :%v", err)
+		return video.ID, nil
+	}
+
+	err = r.data.rdb.Set(ctx, key, videoJson, 24*time.Hour).Err()
+	if err != nil {
+		r.log.Errorf("Create video err :%v", err)
+	}
+
+	// 初始化分数
+	err = r.videoScore(ctx, video.ID)
+	if err != nil {
+		r.log.Errorf("Create video err :%v", err)
+		return 0, err
+	}
+
 	return video.ID, nil
+}
+
+func (r *videoRepo) videoScore(ctx context.Context, videoID int64) error {
+	likeCnt, commentCnt := int64(0), int64(0)
+	uploadTime := timestamppb.New(time.Now())
+	score := r.CalcVideoScore(ctx, likeCnt, commentCnt, uploadTime)
+	err := r.data.rdb.ZAdd(ctx, "video:score", redis.Z{Score: float64(score), Member: videoID}).Err()
+	if err != nil {
+		r.log.Errorf("Score err: %v", err)
+		return err
+	}
+	return nil
 }
 
 // ListUserVideos 根据用户id获取视频列表
@@ -195,4 +234,103 @@ func (r *videoRepo) CheckVideoExistsByID(ctx context.Context, videoID int64) (bo
 		return false, err
 	}
 	return true, nil
+}
+
+func (r *videoRepo) CalcVideoScore(ctx context.Context, likeCnt int64, commentCnt int64, uploadTime *timestamppb.Timestamp) float64 {
+	hours := time.Since(uploadTime.AsTime()).Hours()
+	r.log.WithContext(ctx).Infof("CalcVideoScore likeCnt: %d, commentCnt: %d, uploadTime: %s", likeCnt, commentCnt, hours)
+	if hours < 0 {
+		hours = 0
+	}
+	timeDecay := 1 / math.Pow(hours+2, 1.2)
+	return float64(likeCnt)*1 + float64(commentCnt)*2 + 1000*timeDecay
+}
+
+func (r *videoRepo) GetVideoFavoriteAndCommentCount(ctx context.Context, videoID int64) (int64, int64, time.Time, error) {
+	r.log.WithContext(ctx).Infof("GetVideoFavoriteAndCommentCount videoID: %d", videoID)
+	videoInfo, err := r.data.query.Video.WithContext(ctx).Where(r.data.query.Video.ID.Eq(videoID)).First()
+	if err != nil {
+		r.log.WithContext(ctx).Errorf("get video err: %v", err)
+		return 0, 0, time.Time{}, err
+	}
+
+	return int64(videoInfo.FavoriteCnt), int64(videoInfo.CommentCnt), videoInfo.CreatedAt, nil
+
+}
+
+func (r *videoRepo) GetVideoByTitle(ctx context.Context, title string) ([]*v1.Video, error) {
+	r.log.WithContext(ctx).Infof("GetVideoByTitle: %v", title)
+	r.log.WithContext(ctx).Debugf("esIndex: %s", r.data.esIndex)
+	// 1. 在es中模糊查询
+	res, err := r.data.es.Search().
+		Index(r.data.esIndex).
+		Query(
+			&types.Query{
+				Match: map[string]types.MatchQuery{
+					"title": {Query: title},
+				},
+			},
+		).
+		Size(20).
+		Do(ctx)
+	if err != nil {
+		r.log.WithContext(ctx).Errorf("get video err: %v", err)
+		// 2️⃣ 兜底用 SQL
+		return r.getVideoByTitleFromDB(ctx, title)
+	}
+	if res == nil || res.Hits.Hits == nil || len(res.Hits.Hits) == 0 {
+		r.log.WithContext(ctx).Warnf("ES no hits for title: %s, fallback to DB", title)
+		return r.getVideoByTitleFromDB(ctx, title)
+	}
+
+	// 2. 在sql中模糊查询兜底
+
+	videos := make([]*v1.Video, 0, len(res.Hits.Hits))
+	for _, hit := range res.Hits.Hits {
+		var video v1.Video
+		if err := json.Unmarshal(hit.Source_, &video); err != nil {
+			r.log.WithContext(ctx).Errorf("unmarshal video err: %v, source: %s", err, string(hit.Source_))
+			continue
+		}
+		videos = append(videos, &video)
+	}
+
+	if len(videos) == 0 {
+		return r.getVideoByTitleFromDB(ctx, title)
+	}
+
+	return videos, nil
+}
+
+func (r *videoRepo) getVideoByTitleFromDB(ctx context.Context, title string) ([]*v1.Video, error) {
+	r.log.WithContext(ctx).Infof("getVideoByTitleFromDB: %v", title)
+
+	res, err := r.data.query.Video.
+		WithContext(ctx).
+		Where(r.data.query.Video.Title.Like(fmt.Sprintf("%%%s%%", title))).
+		Order(r.data.query.Video.CreatedAt.Desc()).
+		Find()
+	if err != nil {
+		return nil, err
+	}
+
+	videos := make([]*v1.Video, 0, len(res))
+	for _, v := range res {
+		videos = append(videos, &v1.Video{
+			Id:          v.ID,
+			UserId:      v.UserID,
+			PlayUrl:     v.PlayURL,
+			CoverUrl:    v.CoverURL,
+			Title:       v.Title,
+			Description: v.Description,
+			Duration:    v.Duration,
+			Tags:        v.Tags,
+			FavoriteCnt: v.FavoriteCnt,
+			CommentCnt:  v.CommentCnt,
+
+			ShareCnt:   v.ShareCnt,
+			CollectCnt: v.CollectCnt,
+		})
+	}
+	return videos, nil
 }

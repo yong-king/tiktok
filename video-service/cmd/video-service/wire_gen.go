@@ -25,7 +25,7 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger, jwt *conf.JWT, data_MinIO *conf.Data_MinIO, idGen *conf.IDGen, registry *consul.Registry) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger, jwt *conf.JWT, data_MinIO *conf.Data_MinIO, idGen *conf.IDGen, registry *consul.Registry, elasticsearch *conf.Elasticsearch) (*kratos.App, func(), error) {
 	jwtManager := pkg.NewJWTManagerProvider(jwt)
 	minioUploader := pkg.NewMinioUploaderProvider(data_MinIO)
 	db, err := data.NewDB(confData)
@@ -34,7 +34,11 @@ func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger, jw
 	}
 	client := data.NewRedisClient(confData)
 	idGenerator := pkg.NewIDGenerator(idGen)
-	dataData, cleanup, err := data.NewData(confData, logger, jwtManager, minioUploader, db, client, idGenerator, registry)
+	typedClient, err := data.NewEsClient(elasticsearch)
+	if err != nil {
+		return nil, nil, err
+	}
+	dataData, cleanup, err := data.NewData(confData, logger, jwtManager, minioUploader, db, client, idGenerator, registry, elasticsearch, typedClient)
 	if err != nil {
 		return nil, nil, err
 	}

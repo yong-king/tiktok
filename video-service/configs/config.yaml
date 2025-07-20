@@ -36,3 +36,7 @@ registry:
 service:
   name: video-service
   version: v1.0.0
+elasticsearch:
+  addresses:
+    - "http://127.0.0.1:9200"
+  index: "tiktok_videos"

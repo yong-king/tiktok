@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
@@ -8,7 +9,9 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 	"video-service/internal/conf"
+	"video-service/internal/pkg/otelsetup"
 	"video-service/internal/server"
 	"video-service/internal/service"
 
@@ -110,7 +113,18 @@ func main() {
 	}
 	reg := consul.New(client)
 
-	app, cleanup, err := wireApp(bc.Server, bc.Data, logger, bc.Jwt, bc.Data.Minio, bc.IdGen, reg)
+	// ---------------OpenTelemetry--------------------
+	ctx := context.Background()
+	shutdown := otelsetup.InitTracerProvider(ctx, Name)
+	defer func() {
+		ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+		defer cancel()
+		if err := shutdown(ctx); err != nil {
+			log.Fatalf("failed to shutdown tracer: %v", err)
+		}
+	}()
+
+	app, cleanup, err := wireApp(bc.Server, bc.Data, logger, bc.Jwt, bc.Data.Minio, bc.IdGen, reg, bc.Elasticsearch)
 	if err != nil {
 		panic(err)
 	}

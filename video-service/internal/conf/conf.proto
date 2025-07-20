@@ -12,6 +12,7 @@ message Bootstrap {
   IDGen idGen = 4;
   Registry registry = 5;
   Service service = 6;
+  Elasticsearch elasticsearch = 7;
 }
 
 message Server {
@@ -81,4 +82,8 @@ message Registry {
 message Service {
   string name = 1;     // ✅ 服务名
   string version = 2;  // ✅ 可选：版本
+}
+message Elasticsearch{
+  repeated string addresses = 1;
+  string index = 2;
 }

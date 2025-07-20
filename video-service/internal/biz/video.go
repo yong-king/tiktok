@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"github.com/go-kratos/kratos/v2/errors"
 	"github.com/go-kratos/kratos/v2/log"
+	"google.golang.org/protobuf/types/known/timestamppb"
 	"io"
+	"time"
 	pbUser "video-service/api/user/v1"
 	v1 "video-service/api/video/v1"
 	"video-service/internal/biz/params"
@@ -22,6 +24,9 @@ type VideoRepo interface {
 	CheckUserExistByUserID(context.Context, int64) (*pbUser.CheckUserExistByUserIDReply, error)
 	BatchGetVideoInfo(context.Context, []int64, int64, int64) ([]*v1.Video, error)
 	CheckVideoExistsByID(ctx context.Context, videoID int64) (bool, error)
+	CalcVideoScore(ctx context.Context, count int64, count2 int64, time *timestamppb.Timestamp) float64
+	GetVideoFavoriteAndCommentCount(ctx context.Context, videoID int64) (int64, int64, time.Time, error)
+	GetVideoByTitle(ctx context.Context, title string) ([]*v1.Video, error)
 }
 
 // VideoUsecase is a Video usecase.
@@ -114,4 +119,17 @@ func (uc *VideoUsecase) BatchGetVideoInfo(ctx context.Context, ids []int64, page
 
 func (uc *VideoUsecase) CheckVideoExistsByID(ctx context.Context, videoID int64) (bool, error) {
 	return uc.repo.CheckVideoExistsByID(ctx, videoID)
+}
+
+func (uc *VideoUsecase) CalcVideoScore(ctx context.Context, count int64, count2 int64, time *timestamppb.Timestamp) float64 {
+	return uc.repo.CalcVideoScore(ctx, count, count2, time)
+}
+
+func (uc *VideoUsecase) GetVideoFavoriteAndCommentCount(ctx context.Context, videoID int64) (int64, int64, time.Time, error) {
+	return uc.repo.GetVideoFavoriteAndCommentCount(ctx, videoID)
+}
+
+func (uc *VideoUsecase) GetVideoByTitle(ctx context.Context, title string) ([]*v1.Video, error) {
+	uc.log.WithContext(ctx).Infof("GetVideoByTitle: %v", title)
+	return uc.repo.GetVideoByTitle(ctx, title)
 }

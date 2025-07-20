@@ -145,6 +145,23 @@ paths:
                         application/json:
                             schema:
                                 $ref: '#/components/schemas/video.CreateVideoReply'
+    /api/video/get/title:
+        get:
+            tags:
+                - VideoService
+            operationId: VideoService_GetVideoByTitle
+            parameters:
+                - name: title
+                  in: query
+                  schema:
+                    type: string
+            responses:
+                "200":
+                    description: OK
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/video.GetVideoByTitleReply'
     /api/video/upload:
         post:
             tags:
@@ -284,6 +301,13 @@ components:
                 refreshToken:
                     type: string
             description: 创建视频信息
+        video.GetVideoByTitleReply:
+            type: object
+            properties:
+                videos:
+                    type: array
+                    items:
+                        $ref: '#/components/schemas/video.Video'
         video.ListUserVideosReply:
             type: object
             properties:

@@ -30,6 +30,7 @@ type Bootstrap struct {
 	IdGen         *IDGen                 `protobuf:"bytes,4,opt,name=idGen,proto3" json:"idGen,omitempty"`
 	Registry      *Registry              `protobuf:"bytes,5,opt,name=registry,proto3" json:"registry,omitempty"`
 	Service       *Service               `protobuf:"bytes,6,opt,name=service,proto3" json:"service,omitempty"`
+	Elasticsearch *Elasticsearch         `protobuf:"bytes,7,opt,name=elasticsearch,proto3" json:"elasticsearch,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -102,6 +103,13 @@ func (x *Bootstrap) GetRegistry() *Registry {
 func (x *Bootstrap) GetService() *Service {
 	if x != nil {
 		return x.Service
+	}
+	return nil
+}
+
+func (x *Bootstrap) GetElasticsearch() *Elasticsearch {
+	if x != nil {
+		return x.Elasticsearch
 	}
 	return nil
 }
@@ -442,6 +450,58 @@ func (x *Service) GetVersion() string {
 	return ""
 }
 
+type Elasticsearch struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Addresses     []string               `protobuf:"bytes,1,rep,name=addresses,proto3" json:"addresses,omitempty"`
+	Index         string                 `protobuf:"bytes,2,opt,name=index,proto3" json:"index,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Elasticsearch) Reset() {
+	*x = Elasticsearch{}
+	mi := &file_conf_conf_proto_msgTypes[7]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Elasticsearch) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Elasticsearch) ProtoMessage() {}
+
+func (x *Elasticsearch) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[7]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Elasticsearch.ProtoReflect.Descriptor instead.
+func (*Elasticsearch) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{7}
+}
+
+func (x *Elasticsearch) GetAddresses() []string {
+	if x != nil {
+		return x.Addresses
+	}
+	return nil
+}
+
+func (x *Elasticsearch) GetIndex() string {
+	if x != nil {
+		return x.Index
+	}
+	return ""
+}
+
 type Server_HTTP struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Network       string                 `protobuf:"bytes,1,opt,name=network,proto3" json:"network,omitempty"`
@@ -453,7 +513,7 @@ type Server_HTTP struct {
 
 func (x *Server_HTTP) Reset() {
 	*x = Server_HTTP{}
-	mi := &file_conf_conf_proto_msgTypes[7]
+	mi := &file_conf_conf_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -465,7 +525,7 @@ func (x *Server_HTTP) String() string {
 func (*Server_HTTP) ProtoMessage() {}
 
 func (x *Server_HTTP) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[7]
+	mi := &file_conf_conf_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -513,7 +573,7 @@ type Server_GRPC struct {
 
 func (x *Server_GRPC) Reset() {
 	*x = Server_GRPC{}
-	mi := &file_conf_conf_proto_msgTypes[8]
+	mi := &file_conf_conf_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -525,7 +585,7 @@ func (x *Server_GRPC) String() string {
 func (*Server_GRPC) ProtoMessage() {}
 
 func (x *Server_GRPC) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[8]
+	mi := &file_conf_conf_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -571,7 +631,7 @@ type Server_GIN struct {
 
 func (x *Server_GIN) Reset() {
 	*x = Server_GIN{}
-	mi := &file_conf_conf_proto_msgTypes[9]
+	mi := &file_conf_conf_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -583,7 +643,7 @@ func (x *Server_GIN) String() string {
 func (*Server_GIN) ProtoMessage() {}
 
 func (x *Server_GIN) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[9]
+	mi := &file_conf_conf_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -616,7 +676,7 @@ type Data_Database struct {
 
 func (x *Data_Database) Reset() {
 	*x = Data_Database{}
-	mi := &file_conf_conf_proto_msgTypes[10]
+	mi := &file_conf_conf_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -628,7 +688,7 @@ func (x *Data_Database) String() string {
 func (*Data_Database) ProtoMessage() {}
 
 func (x *Data_Database) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[10]
+	mi := &file_conf_conf_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -670,7 +730,7 @@ type Data_Redis struct {
 
 func (x *Data_Redis) Reset() {
 	*x = Data_Redis{}
-	mi := &file_conf_conf_proto_msgTypes[11]
+	mi := &file_conf_conf_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -682,7 +742,7 @@ func (x *Data_Redis) String() string {
 func (*Data_Redis) ProtoMessage() {}
 
 func (x *Data_Redis) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[11]
+	mi := &file_conf_conf_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -739,7 +799,7 @@ type Data_MinIO struct {
 
 func (x *Data_MinIO) Reset() {
 	*x = Data_MinIO{}
-	mi := &file_conf_conf_proto_msgTypes[12]
+	mi := &file_conf_conf_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -751,7 +811,7 @@ func (x *Data_MinIO) String() string {
 func (*Data_MinIO) ProtoMessage() {}
 
 func (x *Data_MinIO) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[12]
+	mi := &file_conf_conf_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -811,7 +871,7 @@ type Data_UserService struct {
 
 func (x *Data_UserService) Reset() {
 	*x = Data_UserService{}
-	mi := &file_conf_conf_proto_msgTypes[13]
+	mi := &file_conf_conf_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -823,7 +883,7 @@ func (x *Data_UserService) String() string {
 func (*Data_UserService) ProtoMessage() {}
 
 func (x *Data_UserService) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[13]
+	mi := &file_conf_conf_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -855,7 +915,7 @@ type Registry_Consul struct {
 
 func (x *Registry_Consul) Reset() {
 	*x = Registry_Consul{}
-	mi := &file_conf_conf_proto_msgTypes[14]
+	mi := &file_conf_conf_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -867,7 +927,7 @@ func (x *Registry_Consul) String() string {
 func (*Registry_Consul) ProtoMessage() {}
 
 func (x *Registry_Consul) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[14]
+	mi := &file_conf_conf_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -895,14 +955,15 @@ var File_conf_conf_proto protoreflect.FileDescriptor
 const file_conf_conf_proto_rawDesc = "" +
 	"\n" +
 	"\x0fconf/conf.proto\x12\n" +
-	"kratos.api\x1a\x1egoogle/protobuf/duration.proto\"\x8a\x02\n" +
+	"kratos.api\x1a\x1egoogle/protobuf/duration.proto\"\xcb\x02\n" +
 	"\tBootstrap\x12*\n" +
 	"\x06server\x18\x01 \x01(\v2\x12.kratos.api.ServerR\x06server\x12$\n" +
 	"\x04data\x18\x02 \x01(\v2\x10.kratos.api.DataR\x04data\x12!\n" +
 	"\x03jwt\x18\x03 \x01(\v2\x0f.kratos.api.JWTR\x03jwt\x12'\n" +
 	"\x05idGen\x18\x04 \x01(\v2\x11.kratos.api.IDGenR\x05idGen\x120\n" +
 	"\bregistry\x18\x05 \x01(\v2\x14.kratos.api.RegistryR\bregistry\x12-\n" +
-	"\aservice\x18\x06 \x01(\v2\x13.kratos.api.ServiceR\aservice\"\xfd\x02\n" +
+	"\aservice\x18\x06 \x01(\v2\x13.kratos.api.ServiceR\aservice\x12?\n" +
+	"\relasticsearch\x18\a \x01(\v2\x19.kratos.api.ElasticsearchR\relasticsearch\"\xfd\x02\n" +
 	"\x06Server\x12+\n" +
 	"\x04http\x18\x01 \x01(\v2\x17.kratos.api.Server.HTTPR\x04http\x12+\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x17.kratos.api.Server.GRPCR\x04grpc\x12(\n" +
@@ -955,7 +1016,10 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\x04addr\x18\x01 \x01(\tR\x04addr\"7\n" +
 	"\aService\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
-	"\aversion\x18\x02 \x01(\tR\aversionB\"Z video-service/internal/conf;confb\x06proto3"
+	"\aversion\x18\x02 \x01(\tR\aversion\"C\n" +
+	"\rElasticsearch\x12\x1c\n" +
+	"\taddresses\x18\x01 \x03(\tR\taddresses\x12\x14\n" +
+	"\x05index\x18\x02 \x01(\tR\x05indexB\"Z video-service/internal/conf;confb\x06proto3"
 
 var (
 	file_conf_conf_proto_rawDescOnce sync.Once
@@ -969,7 +1033,7 @@ func file_conf_conf_proto_rawDescGZIP() []byte {
 	return file_conf_conf_proto_rawDescData
 }
 
-var file_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 15)
+var file_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
 var file_conf_conf_proto_goTypes = []any{
 	(*Bootstrap)(nil),           // 0: kratos.api.Bootstrap
 	(*Server)(nil),              // 1: kratos.api.Server
@@ -978,15 +1042,16 @@ var file_conf_conf_proto_goTypes = []any{
 	(*IDGen)(nil),               // 4: kratos.api.IDGen
 	(*Registry)(nil),            // 5: kratos.api.Registry
 	(*Service)(nil),             // 6: kratos.api.Service
-	(*Server_HTTP)(nil),         // 7: kratos.api.Server.HTTP
-	(*Server_GRPC)(nil),         // 8: kratos.api.Server.GRPC
-	(*Server_GIN)(nil),          // 9: kratos.api.Server.GIN
-	(*Data_Database)(nil),       // 10: kratos.api.Data.Database
-	(*Data_Redis)(nil),          // 11: kratos.api.Data.Redis
-	(*Data_MinIO)(nil),          // 12: kratos.api.Data.MinIO
-	(*Data_UserService)(nil),    // 13: kratos.api.Data.UserService
-	(*Registry_Consul)(nil),     // 14: kratos.api.Registry.Consul
-	(*durationpb.Duration)(nil), // 15: google.protobuf.Duration
+	(*Elasticsearch)(nil),       // 7: kratos.api.Elasticsearch
+	(*Server_HTTP)(nil),         // 8: kratos.api.Server.HTTP
+	(*Server_GRPC)(nil),         // 9: kratos.api.Server.GRPC
+	(*Server_GIN)(nil),          // 10: kratos.api.Server.GIN
+	(*Data_Database)(nil),       // 11: kratos.api.Data.Database
+	(*Data_Redis)(nil),          // 12: kratos.api.Data.Redis
+	(*Data_MinIO)(nil),          // 13: kratos.api.Data.MinIO
+	(*Data_UserService)(nil),    // 14: kratos.api.Data.UserService
+	(*Registry_Consul)(nil),     // 15: kratos.api.Registry.Consul
+	(*durationpb.Duration)(nil), // 16: google.protobuf.Duration
 }
 var file_conf_conf_proto_depIdxs = []int32{
 	1,  // 0: kratos.api.Bootstrap.server:type_name -> kratos.api.Server
@@ -995,23 +1060,24 @@ var file_conf_conf_proto_depIdxs = []int32{
 	4,  // 3: kratos.api.Bootstrap.idGen:type_name -> kratos.api.IDGen
 	5,  // 4: kratos.api.Bootstrap.registry:type_name -> kratos.api.Registry
 	6,  // 5: kratos.api.Bootstrap.service:type_name -> kratos.api.Service
-	7,  // 6: kratos.api.Server.http:type_name -> kratos.api.Server.HTTP
-	8,  // 7: kratos.api.Server.grpc:type_name -> kratos.api.Server.GRPC
-	9,  // 8: kratos.api.Server.gin:type_name -> kratos.api.Server.GIN
-	10, // 9: kratos.api.Data.database:type_name -> kratos.api.Data.Database
-	11, // 10: kratos.api.Data.redis:type_name -> kratos.api.Data.Redis
-	12, // 11: kratos.api.Data.minio:type_name -> kratos.api.Data.MinIO
-	13, // 12: kratos.api.Data.user_service:type_name -> kratos.api.Data.UserService
-	14, // 13: kratos.api.Registry.consul:type_name -> kratos.api.Registry.Consul
-	15, // 14: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
-	15, // 15: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
-	15, // 16: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
-	15, // 17: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
-	18, // [18:18] is the sub-list for method output_type
-	18, // [18:18] is the sub-list for method input_type
-	18, // [18:18] is the sub-list for extension type_name
-	18, // [18:18] is the sub-list for extension extendee
-	0,  // [0:18] is the sub-list for field type_name
+	7,  // 6: kratos.api.Bootstrap.elasticsearch:type_name -> kratos.api.Elasticsearch
+	8,  // 7: kratos.api.Server.http:type_name -> kratos.api.Server.HTTP
+	9,  // 8: kratos.api.Server.grpc:type_name -> kratos.api.Server.GRPC
+	10, // 9: kratos.api.Server.gin:type_name -> kratos.api.Server.GIN
+	11, // 10: kratos.api.Data.database:type_name -> kratos.api.Data.Database
+	12, // 11: kratos.api.Data.redis:type_name -> kratos.api.Data.Redis
+	13, // 12: kratos.api.Data.minio:type_name -> kratos.api.Data.MinIO
+	14, // 13: kratos.api.Data.user_service:type_name -> kratos.api.Data.UserService
+	15, // 14: kratos.api.Registry.consul:type_name -> kratos.api.Registry.Consul
+	16, // 15: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
+	16, // 16: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
+	16, // 17: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
+	16, // 18: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
+	19, // [19:19] is the sub-list for method output_type
+	19, // [19:19] is the sub-list for method input_type
+	19, // [19:19] is the sub-list for extension type_name
+	19, // [19:19] is the sub-list for extension extendee
+	0,  // [0:19] is the sub-list for field type_name
 }
 
 func init() { file_conf_conf_proto_init() }
@@ -1025,7 +1091,7 @@ func file_conf_conf_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_conf_conf_proto_rawDesc), len(file_conf_conf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   15,
+			NumMessages:   16,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

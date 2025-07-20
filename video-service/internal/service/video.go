@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/go-kratos/kratos/v2/errors"
+	"github.com/golang/protobuf/ptypes/timestamp"
 	"io"
 	"net/http"
 
@@ -217,4 +218,30 @@ func (s *VideoService) CheckVideoExists(ctx context.Context, in *v1.CheckVideoEx
 		return nil, err
 	}
 	return &v1.CheckVideoExistsReply{Exist: exist}, nil
+}
+
+func (s *VideoService) CalcVideoScore(ctx context.Context, req *v1.CalcVideoScoreRequest) (*v1.CalcVideoScoreReply, error) {
+	score := s.uc.CalcVideoScore(ctx, req.FavoriteCount, req.CommentCount, req.UploadTime)
+	return &v1.CalcVideoScoreReply{Score: float32(score)}, nil
+}
+
+func (s *VideoService) GetVideoFavoriteAndCommentCount(ctx context.Context, req *v1.GetVideoFavoriteAndCommentCountRequest) (*v1.GetVideoFavoriteAndCommentCountReply, error) {
+	favoriteCount, commentCount, uploadTime, err := s.uc.GetVideoFavoriteAndCommentCount(ctx, req.VideoId)
+	if err != nil {
+		return nil, err
+	}
+	return &v1.GetVideoFavoriteAndCommentCountReply{
+		FavoriteCount: favoriteCount,
+		CommentCount:  commentCount,
+		UploadTime:    &timestamp.Timestamp{Seconds: uploadTime.Unix()},
+	}, nil
+}
+
+// GetVideoByTitle 根据视频title模糊获取视频
+func (s *VideoService) GetVideoByTitle(ctx context.Context, rep *v1.GetVideoByTitleRequest) (*v1.GetVideoByTitleReply, error) {
+	videos, err := s.uc.GetVideoByTitle(ctx, rep.Title)
+	if err != nil {
+		return nil, err
+	}
+	return &v1.GetVideoByTitleReply{Videos: videos}, nil
 }
