@@ -1,0 +1,35 @@
+server:
+  http:
+    addr: 0.0.0.0:18090
+    timeout: 1s
+  grpc:
+    addr: 0.0.0.0:19090
+    timeout: 1s
+data:
+  database:
+    driver: mysql
+    source: root:root@tcp(127.0.0.1:3306)/test?parseTime=True&loc=Local
+  redis:
+    addr: 127.0.0.1:6379
+    read_timeout: 0.2s
+    write_timeout: 0.2s
+
+elasticsearch:
+  addresses:
+    - "http://localhost:9200"
+  indices:
+    - topic: "tiktok_users"
+      index: "tiktok_users"
+    - topic: "tiktok_relation"
+      index: "tiktok_relation"
+    - topic: "tiktok_videos"
+      index: "tiktok_videos"
+
+kafka:
+  brokers:
+    - "localhost:9092"
+  group_id: "tiktok_sync_group"
+  topics:
+    - "tiktok_users"
+    - "tiktok_relation"
+    - "tiktok_videos"
