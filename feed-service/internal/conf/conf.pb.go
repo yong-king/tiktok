@@ -147,6 +147,7 @@ type Data struct {
 	Database      *Data_Database         `protobuf:"bytes,1,opt,name=database,proto3" json:"database,omitempty"`
 	Redis         *Data_Redis            `protobuf:"bytes,2,opt,name=redis,proto3" json:"redis,omitempty"`
 	UserService   *Data_UserService      `protobuf:"bytes,3,opt,name=user_service,json=userService,proto3" json:"user_service,omitempty"`
+	VideoService  *Data_VideoService     `protobuf:"bytes,4,opt,name=video_service,json=videoService,proto3" json:"video_service,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -198,6 +199,13 @@ func (x *Data) GetRedis() *Data_Redis {
 func (x *Data) GetUserService() *Data_UserService {
 	if x != nil {
 		return x.UserService
+	}
+	return nil
+}
+
+func (x *Data) GetVideoService() *Data_VideoService {
+	if x != nil {
+		return x.VideoService
 	}
 	return nil
 }
@@ -582,6 +590,50 @@ func (x *Data_UserService) GetEndpoint() string {
 	return ""
 }
 
+type Data_VideoService struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Endpoint      string                 `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Data_VideoService) Reset() {
+	*x = Data_VideoService{}
+	mi := &file_conf_conf_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Data_VideoService) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Data_VideoService) ProtoMessage() {}
+
+func (x *Data_VideoService) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Data_VideoService.ProtoReflect.Descriptor instead.
+func (*Data_VideoService) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{2, 3}
+}
+
+func (x *Data_VideoService) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
 type Registry_Consul struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Addr          string                 `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
@@ -591,7 +643,7 @@ type Registry_Consul struct {
 
 func (x *Registry_Consul) Reset() {
 	*x = Registry_Consul{}
-	mi := &file_conf_conf_proto_msgTypes[10]
+	mi := &file_conf_conf_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -603,7 +655,7 @@ func (x *Registry_Consul) String() string {
 func (*Registry_Consul) ProtoMessage() {}
 
 func (x *Registry_Consul) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[10]
+	mi := &file_conf_conf_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -647,11 +699,12 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\x04GRPC\x12\x18\n" +
 	"\anetwork\x18\x01 \x01(\tR\anetwork\x12\x12\n" +
 	"\x04addr\x18\x02 \x01(\tR\x04addr\x123\n" +
-	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\xc9\x03\n" +
+	"\atimeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\atimeout\"\xb9\x04\n" +
 	"\x04Data\x125\n" +
 	"\bdatabase\x18\x01 \x01(\v2\x19.kratos.api.Data.DatabaseR\bdatabase\x12,\n" +
 	"\x05redis\x18\x02 \x01(\v2\x16.kratos.api.Data.RedisR\x05redis\x12?\n" +
-	"\fuser_service\x18\x03 \x01(\v2\x1c.kratos.api.Data.UserServiceR\vuserService\x1a:\n" +
+	"\fuser_service\x18\x03 \x01(\v2\x1c.kratos.api.Data.UserServiceR\vuserService\x12B\n" +
+	"\rvideo_service\x18\x04 \x01(\v2\x1d.kratos.api.Data.VideoServiceR\fvideoService\x1a:\n" +
 	"\bDatabase\x12\x16\n" +
 	"\x06driver\x18\x01 \x01(\tR\x06driver\x12\x16\n" +
 	"\x06source\x18\x02 \x01(\tR\x06source\x1a\xb3\x01\n" +
@@ -661,6 +714,8 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\fread_timeout\x18\x03 \x01(\v2\x19.google.protobuf.DurationR\vreadTimeout\x12>\n" +
 	"\rwrite_timeout\x18\x04 \x01(\v2\x19.google.protobuf.DurationR\fwriteTimeout\x1a)\n" +
 	"\vUserService\x12\x1a\n" +
+	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x1a*\n" +
+	"\fVideoService\x12\x1a\n" +
 	"\bendpoint\x18\x01 \x01(\tR\bendpoint\"]\n" +
 	"\bRegistry\x123\n" +
 	"\x06consul\x18\x01 \x01(\v2\x1b.kratos.api.Registry.ConsulR\x06consul\x1a\x1c\n" +
@@ -682,7 +737,7 @@ func file_conf_conf_proto_rawDescGZIP() []byte {
 	return file_conf_conf_proto_rawDescData
 }
 
-var file_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 11)
+var file_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_conf_conf_proto_goTypes = []any{
 	(*Bootstrap)(nil),           // 0: kratos.api.Bootstrap
 	(*Server)(nil),              // 1: kratos.api.Server
@@ -694,8 +749,9 @@ var file_conf_conf_proto_goTypes = []any{
 	(*Data_Database)(nil),       // 7: kratos.api.Data.Database
 	(*Data_Redis)(nil),          // 8: kratos.api.Data.Redis
 	(*Data_UserService)(nil),    // 9: kratos.api.Data.UserService
-	(*Registry_Consul)(nil),     // 10: kratos.api.Registry.Consul
-	(*durationpb.Duration)(nil), // 11: google.protobuf.Duration
+	(*Data_VideoService)(nil),   // 10: kratos.api.Data.VideoService
+	(*Registry_Consul)(nil),     // 11: kratos.api.Registry.Consul
+	(*durationpb.Duration)(nil), // 12: google.protobuf.Duration
 }
 var file_conf_conf_proto_depIdxs = []int32{
 	1,  // 0: kratos.api.Bootstrap.server:type_name -> kratos.api.Server
@@ -707,16 +763,17 @@ var file_conf_conf_proto_depIdxs = []int32{
 	7,  // 6: kratos.api.Data.database:type_name -> kratos.api.Data.Database
 	8,  // 7: kratos.api.Data.redis:type_name -> kratos.api.Data.Redis
 	9,  // 8: kratos.api.Data.user_service:type_name -> kratos.api.Data.UserService
-	10, // 9: kratos.api.Registry.consul:type_name -> kratos.api.Registry.Consul
-	11, // 10: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
-	11, // 11: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
-	11, // 12: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
-	11, // 13: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
-	14, // [14:14] is the sub-list for method output_type
-	14, // [14:14] is the sub-list for method input_type
-	14, // [14:14] is the sub-list for extension type_name
-	14, // [14:14] is the sub-list for extension extendee
-	0,  // [0:14] is the sub-list for field type_name
+	10, // 9: kratos.api.Data.video_service:type_name -> kratos.api.Data.VideoService
+	11, // 10: kratos.api.Registry.consul:type_name -> kratos.api.Registry.Consul
+	12, // 11: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
+	12, // 12: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
+	12, // 13: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
+	12, // 14: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
+	15, // [15:15] is the sub-list for method output_type
+	15, // [15:15] is the sub-list for method input_type
+	15, // [15:15] is the sub-list for extension type_name
+	15, // [15:15] is the sub-list for extension extendee
+	0,  // [0:15] is the sub-list for field type_name
 }
 
 func init() { file_conf_conf_proto_init() }
@@ -730,7 +787,7 @@ func file_conf_conf_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_conf_conf_proto_rawDesc), len(file_conf_conf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   11,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

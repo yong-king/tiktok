@@ -15,6 +15,8 @@ data:
     write_timeout: 0.2s
   user_service:
     endpoint: discovery:///user-service
+  video-service:
+    endpoint: discovery:///video-service
 registry:
   consul:
     addr: 127.0.0.1:8500

@@ -26,7 +26,7 @@ type FeedRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Token         string                 `protobuf:"bytes,1,opt,name=token,proto3" json:"token,omitempty"`
 	RefreshToken  string                 `protobuf:"bytes,2,opt,name=refreshToken,proto3" json:"refreshToken,omitempty"`
-	LastTime      int64                  `protobuf:"varint,3,opt,name=last_time,json=lastTime,proto3" json:"last_time,omitempty"` // 时间游标，秒级时间戳
+	Offset        int64                  `protobuf:"varint,3,opt,name=offset,proto3" json:"offset,omitempty"` // 时间游标，秒级时间戳
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -75,9 +75,9 @@ func (x *FeedRequest) GetRefreshToken() string {
 	return ""
 }
 
-func (x *FeedRequest) GetLastTime() int64 {
+func (x *FeedRequest) GetOffset() int64 {
 	if x != nil {
-		return x.LastTime
+		return x.Offset
 	}
 	return 0
 }
@@ -85,7 +85,7 @@ func (x *FeedRequest) GetLastTime() int64 {
 type FeedReply struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Videos        []*Video               `protobuf:"bytes,1,rep,name=videos,proto3" json:"videos,omitempty"`
-	NextTime      int64                  `protobuf:"varint,2,opt,name=next_time,json=nextTime,proto3" json:"next_time,omitempty"`
+	NextOffset    int64                  `protobuf:"varint,2,opt,name=next_offset,json=nextOffset,proto3" json:"next_offset,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -127,9 +127,9 @@ func (x *FeedReply) GetVideos() []*Video {
 	return nil
 }
 
-func (x *FeedReply) GetNextTime() int64 {
+func (x *FeedReply) GetNextOffset() int64 {
 	if x != nil {
-		return x.NextTime
+		return x.NextOffset
 	}
 	return 0
 }
@@ -144,8 +144,8 @@ type Video struct {
 	CommentCount  int64                  `protobuf:"varint,6,opt,name=comment_count,json=commentCount,proto3" json:"comment_count,omitempty"`
 	IsLiked       bool                   `protobuf:"varint,7,opt,name=is_liked,json=isLiked,proto3" json:"is_liked,omitempty"`
 	PublishTime   int64                  `protobuf:"varint,8,opt,name=publish_time,json=publishTime,proto3" json:"publish_time,omitempty"`
-	IsFavorite    bool                   `protobuf:"varint,9,opt,name=is_favorite,json=isFavorite,proto3" json:"is_favorite,omitempty"`
-	Author        *Author                `protobuf:"bytes,10,opt,name=author,proto3" json:"author,omitempty"`
+	IsFavorite    bool                   `protobuf:"varint,10,opt,name=is_favorite,json=isFavorite,proto3" json:"is_favorite,omitempty"`
+	Author        *Author                `protobuf:"bytes,11,opt,name=author,proto3" json:"author,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -314,14 +314,15 @@ var File_feed_v1_feed_proto protoreflect.FileDescriptor
 
 const file_feed_v1_feed_proto_rawDesc = "" +
 	"\n" +
-	"\x12feed/v1/feed.proto\x12\x04feed\x1a\x1cgoogle/api/annotations.proto\"d\n" +
+	"\x12feed/v1/feed.proto\x12\x04feed\x1a\x1cgoogle/api/annotations.proto\"_\n" +
 	"\vFeedRequest\x12\x14\n" +
 	"\x05token\x18\x01 \x01(\tR\x05token\x12\"\n" +
-	"\frefreshToken\x18\x02 \x01(\tR\frefreshToken\x12\x1b\n" +
-	"\tlast_time\x18\x03 \x01(\x03R\blastTime\"M\n" +
+	"\frefreshToken\x18\x02 \x01(\tR\frefreshToken\x12\x16\n" +
+	"\x06offset\x18\x03 \x01(\x03R\x06offset\"Q\n" +
 	"\tFeedReply\x12#\n" +
-	"\x06videos\x18\x01 \x03(\v2\v.feed.VideoR\x06videos\x12\x1b\n" +
-	"\tnext_time\x18\x02 \x01(\x03R\bnextTime\"\xbb\x02\n" +
+	"\x06videos\x18\x01 \x03(\v2\v.feed.VideoR\x06videos\x12\x1f\n" +
+	"\vnext_offset\x18\x02 \x01(\x03R\n" +
+	"nextOffset\"\xbb\x02\n" +
 	"\x05Video\x12\x19\n" +
 	"\bvideo_id\x18\x01 \x01(\x03R\avideoId\x12\x14\n" +
 	"\x05title\x18\x02 \x01(\tR\x05title\x12\x1b\n" +
@@ -332,10 +333,10 @@ const file_feed_v1_feed_proto_rawDesc = "" +
 	"\rcomment_count\x18\x06 \x01(\x03R\fcommentCount\x12\x19\n" +
 	"\bis_liked\x18\a \x01(\bR\aisLiked\x12!\n" +
 	"\fpublish_time\x18\b \x01(\x03R\vpublishTime\x12\x1f\n" +
-	"\vis_favorite\x18\t \x01(\bR\n" +
+	"\vis_favorite\x18\n" +
+	" \x01(\bR\n" +
 	"isFavorite\x12$\n" +
-	"\x06author\x18\n" +
-	" \x01(\v2\f.feed.AuthorR\x06author\"K\n" +
+	"\x06author\x18\v \x01(\v2\f.feed.AuthorR\x06author\"K\n" +
 	"\x06Author\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\x03R\x02id\x12\x12\n" +
 	"\x04name\x18\x02 \x01(\tR\x04name\x12\x1d\n" +

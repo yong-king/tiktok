@@ -15,6 +15,7 @@ import (
 	"github.com/google/wire"
 
 	pbUser "feed-service/api/user/v1"
+	pbVideo "feed-service/api/video/v1"
 	"feed-service/internal/conf"
 	"feed-service/internal/data/query"
 )
@@ -30,7 +31,8 @@ type Data struct {
 	rdb   *redis.Client
 	query *query.Query
 
-	UserClient pbUser.UserServiceClient
+	UserClient  pbUser.UserServiceClient
+	VideoClient pbVideo.VideoServiceClient
 }
 
 // NewData .
@@ -45,10 +47,16 @@ func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client, rr
 		grpc.WithEndpoint(c.UserService.Endpoint),
 		grpc.WithDiscovery(rr),
 	)
+
+	connVideo, err := grpc.DialInsecure(
+		context.Background(),
+		grpc.WithEndpoint(c.VideoService.Endpoint),
+		grpc.WithDiscovery(rr),
+	)
 	if err != nil {
 		return nil, nil, err
 	}
-	return &Data{log: log.NewHelper(logger), db: db, rdb: rdb, query: query.Q, UserClient: pbUser.NewUserServiceClient(conn)}, cleanup, nil
+	return &Data{log: log.NewHelper(logger), db: db, rdb: rdb, query: query.Q, UserClient: pbUser.NewUserServiceClient(conn), VideoClient: pbVideo.NewVideoServiceClient(connVideo)}, cleanup, nil
 }
 
 // NewDB 数据库连接

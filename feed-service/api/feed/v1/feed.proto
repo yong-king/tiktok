@@ -17,12 +17,12 @@ service FeedService {
 message FeedRequest {
   string token = 1;
   string refreshToken = 2;
-  int64 last_time = 3;  // 时间游标，秒级时间戳
+  int64 offset = 3;  // 时间游标，秒级时间戳
 }
 
 message FeedReply {
   repeated Video videos = 1;
-  int64 next_time = 2;
+  int64 next_offset = 2;
 }
 
 message Video {
@@ -34,8 +34,8 @@ message Video {
   int64 comment_count = 6;
   bool is_liked = 7;
   int64 publish_time = 8;
-  bool is_favorite = 9;
-  Author author = 10;
+  bool is_favorite = 10;
+  Author author = 11;
 }
 
 message Author {

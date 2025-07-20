@@ -41,9 +41,13 @@ message Data {
   message UserService {
     string endpoint = 1;
   }
+  message VideoService {
+    string endpoint = 1;
+  }
   Database database = 1;
   Redis redis = 2;
   UserService user_service = 3;
+  VideoService video_service = 4;
 }
 message Registry {
   message Consul {

@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"time"
+	"feed-service/internal/pkg/constants"
 
 	v1 "feed-service/api/feed/v1"
 	"feed-service/internal/biz"
@@ -35,18 +35,21 @@ func (s *FeedService) GetFeed(ctx context.Context, in *v1.FeedRequest) (*v1.Feed
 		userID = uid
 	}
 
-	latestTime := in.LastTime
-	if latestTime == 0 {
-		latestTime = time.Now().Unix()
-	}
+	//latestTime := in.LastTime
+	//if latestTime == 0 {
+	//	latestTime = time.Now().Unix()
+	//}
 
-	videos, nextTime, err := s.uc.GetFeed(ctx, userID, latestTime)
+	offset := in.Offset
+	limit := constants.FeedPageLimit
+
+	// videos, nextTime, err := s.uc.GetFeed(ctx, userID, latestTime)
+	videos, err := s.uc.GetFeed(ctx, userID, offset, int64(limit))
 	if err != nil {
 		return nil, err
 	}
 
 	return &v1.FeedReply{
-		Videos:   videos,
-		NextTime: nextTime,
+		Videos: videos,
 	}, nil
 }
