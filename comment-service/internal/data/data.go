@@ -8,12 +8,15 @@ import (
 	"errors"
 	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
 	"gorm.io/gorm"
 	"strings"
+	"time"
 
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
 	"github.com/redis/go-redis/v9"
+	gogrpc "google.golang.org/grpc" // 引入底层 grpc 包
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 
@@ -29,7 +32,7 @@ type Data struct {
 	// TODO wrapped database client
 	log *log.Helper
 	db  *gorm.DB
-	reb *redis.Client
+	rdb *redis.Client
 	idg *pkg.IDGenerator
 
 	query       *query.Query
@@ -44,18 +47,25 @@ func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client, rr
 	}
 	query.SetDefault(db)
 
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+
 	connUser, err := grpc.DialInsecure(
-		context.Background(),
+		ctx,
 		grpc.WithEndpoint(c.UserService.Endpoint),
-		grpc.WithDiscovery(rr))
+		grpc.WithDiscovery(rr),
+		grpc.WithOptions(gogrpc.WithStatsHandler(otelgrpc.NewClientHandler())),
+	)
 	if err != nil {
 		return nil, cleanup, err
 	}
 
 	connVideo, err := grpc.DialInsecure(
-		context.Background(),
+		ctx,
 		grpc.WithEndpoint(c.VideoService.Endpoint),
-		grpc.WithDiscovery(rr))
+		grpc.WithDiscovery(rr),
+		grpc.WithOptions(gogrpc.WithStatsHandler(otelgrpc.NewClientHandler())),
+	)
 	if err != nil {
 		return nil, cleanup, err
 	}
@@ -63,7 +73,7 @@ func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client, rr
 	return &Data{
 		log:         log.NewHelper(logger),
 		db:          db,
-		reb:         rdb,
+		rdb:         rdb,
 		query:       query.Q,
 		UserClient:  pbUser.NewUserServiceClient(connUser),
 		VideoClient: pbVideo.NewVideoServiceClient(connVideo),

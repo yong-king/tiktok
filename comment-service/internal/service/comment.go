@@ -4,9 +4,12 @@ import (
 	v1 "comment-service/api/comment/v1"
 	"comment-service/internal/biz"
 	"comment-service/internal/biz/param"
+	"comment-service/internal/pkg/tracing"
 	"context"
 	"github.com/go-kratos/kratos/v2/errors"
+	"go.opentelemetry.io/otel/attribute"
 	"google.golang.org/protobuf/types/known/timestamppb"
+	"strconv"
 )
 
 type CommentService struct {
@@ -21,6 +24,13 @@ func NewCommentService(uc *biz.CommentUsecase) *CommentService {
 }
 
 func (s *CommentService) CreateComment(ctx context.Context, in *v1.CreateCommentRequest) (*v1.CreateCommentReply, error) {
+
+	// opentelemetry
+	ctx, span := tracing.StartSpan(ctx, "CommentService.CreateComment",
+		attribute.String("comment.video_id", strconv.FormatInt(in.VideoId, 10)),
+	)
+	defer span.End()
+
 	// 1. 参数解析
 	// 1.1 请求参数
 	if in.ActionType != 1 && in.ActionType != 2 || in.VideoId == 0 || len(in.Token) == 0 {

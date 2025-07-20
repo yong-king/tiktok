@@ -33,6 +33,31 @@ service VideoService {
   rpc BatchGetVideoInfo(BatchGetVideoInfoRequest) returns (BatchGetVideoInfoReply);
   // 检查视频是否存在
   rpc CheckVideoExists(CheckVideoExistsRequest) returns (CheckVideoExistsReply);
+
+  rpc CalcVideoScore(CalcVideoScoreRequest) returns (CalcVideoScoreReply);
+
+  rpc GetVideoFavoriteAndCommentCount(GetVideoFavoriteAndCommentCountRequest)  returns (GetVideoFavoriteAndCommentCountReply);
+}
+
+message GetVideoFavoriteAndCommentCountRequest {
+  int64 video_id = 1;
+}
+
+message GetVideoFavoriteAndCommentCountReply {
+  int64 favorite_count = 1;
+  int64 comment_count = 2;
+  google.protobuf.Timestamp uploadTime = 3;
+}
+
+// 视频分数计算
+message CalcVideoScoreRequest {
+  int64 favorite_count = 1;
+  int64 comment_count = 2;
+  google.protobuf.Timestamp uploadTime = 3;
+}
+
+message CalcVideoScoreReply {
+  float score = 1;
 }
 
 // 检查视频是否存在

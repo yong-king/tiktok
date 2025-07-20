@@ -1,9 +1,12 @@
 package main
 
 import (
+	"comment-service/internal/pkg/otelsetup"
+	"context"
 	"flag"
 	"fmt"
 	"os"
+	"time"
 
 	"comment-service/internal/conf"
 
@@ -91,6 +94,17 @@ func main() {
 		panic(err)
 	}
 	reg := consul.New(client)
+
+	// ---------------OpenTelemetry--------------------
+	ctx := context.Background()
+	shutdown := otelsetup.InitTracerProvider(ctx, Name)
+	defer func() {
+		ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+		defer cancel()
+		if err := shutdown(ctx); err != nil {
+			log.Fatalf("failed to shutdown tracer: %v", err)
+		}
+	}()
 
 	app, cleanup, err := wireApp(bc.Server, bc.Data, logger, reg, bc.IdGen)
 	if err != nil {
