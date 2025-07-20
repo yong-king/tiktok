@@ -1,0 +1,220 @@
+{
+    "annotations": {
+        "list": []
+    },
+    "editable": true,
+    "gnetId": null,
+    "graphTooltip": 0,
+    "id": null,
+    "iteration": 1710653328291,
+    "links": [],
+    "panels": [
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 0,
+                "y": 0
+            },
+            "id": 1,
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(user_service_requests_total[1m])) by (method, path, status)",
+                    "interval": "",
+                    "legendFormat": "{{method}} {{path}} {{status}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "User-Service QPS",
+            "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 8,
+                "w": 12,
+                "x": 12,
+                "y": 0
+            },
+            "id": 2,
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "histogram_quantile(0.95, sum(rate(user_service_request_duration_seconds_bucket[1m])) by (le, path, method))",
+                    "interval": "",
+                    "legendFormat": "p95 {{method}} {{path}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "User-Service Request Duration p95",
+            "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "none"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 0,
+                "y": 8
+            },
+            "id": 3,
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "go_goroutines",
+                    "interval": "",
+                    "legendFormat": "Goroutines",
+                    "refId": "A"
+                }
+            ],
+            "title": "Goroutines",
+            "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "bytes"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 6,
+                "y": 8
+            },
+            "id": 4,
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "go_memstats_alloc_bytes",
+                    "interval": "",
+                    "legendFormat": "Allocated Memory",
+                    "refId": "A"
+                }
+            ],
+            "title": "Memory Usage",
+            "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "s"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 12,
+                "y": 8
+            },
+            "id": 5,
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "rate(process_cpu_seconds_total[1m])",
+                    "interval": "",
+                    "legendFormat": "CPU Usage",
+                    "refId": "A"
+                }
+            ],
+            "title": "CPU Usage",
+            "type": "timeseries"
+        },
+        {
+            "datasource": "Prometheus",
+            "fieldConfig": {
+                "defaults": {
+                    "unit": "reqps"
+                },
+                "overrides": []
+            },
+            "gridPos": {
+                "h": 6,
+                "w": 6,
+                "x": 18,
+                "y": 8
+            },
+            "id": 6,
+            "options": {
+                "legend": {
+                    "displayMode": "table",
+                    "placement": "bottom"
+                }
+            },
+            "targets": [
+                {
+                    "expr": "sum(rate(user_service_requests_total{status!~\"2..\"}[1m])) by (method, path, status)",
+                    "interval": "",
+                    "legendFormat": "{{method}} {{path}} {{status}}",
+                    "refId": "A"
+                }
+            ],
+            "title": "Error Requests (Non-2xx)",
+            "type": "timeseries"
+        }
+    ],
+    "refresh": "5s",
+    "schemaVersion": 38,
+    "style": "dark",
+    "tags": [ "user-service", "prometheus" ],
+    "templating": {
+        "list": []
+    },
+    "time": {
+        "from": "now-5m",
+        "to": "now"
+    },
+    "timezone": "",
+    "title": "User-Service Monitoring",
+    "version": 1,
+    "weekStart": ""
+}
