@@ -1,0 +1,58 @@
+syntax = "proto3";
+package relation;
+option go_package = "relation/api/v1;v1";
+
+import "google/api/annotations.proto";
+
+service RelationService {
+  // 用户关系操作
+  rpc RelationControl (RelationControlRequest) returns (RelationControlReply) {
+    option (google.api.http) = {
+      post: "/api/relation/control",
+      body: "*"
+    };
+  }
+
+  rpc GetRelationListByUserID(GetRelationListByUserIDRequest) returns (GetRelationListByUserIDReply) {
+    option (google.api.http) = {
+      get: "/api/relation/list"
+    };
+  }
+}
+
+// RelationControlRequest 建立和删除关系操作
+message RelationControlRequest {
+  string token = 1;
+  string refresh_token = 2;
+  int64 to_user_id = 3;
+  int32 action_type = 4;
+}
+
+message RelationControlReply {
+  string msg = 1;
+}
+
+// GetRelationListByUserID 根据用户id获取用户关注列表
+message GetRelationListByUserIDRequest {
+  string token = 1;
+  string refresh_token = 2;
+  int64 user_id = 3;
+}
+
+message GetRelationListByUserIDReply {
+  repeated User user = 1;
+}
+
+message User {
+  int64 id = 1; // 用户id
+  string name = 2;  // 用户名称
+  int32 follow_count = 3; // 关注总数
+  int32 follower_count = 4; // 粉丝总数
+  bool is_follow = 5; // true-已关注，false-未关注
+  string avatar = 6;  // 用户头像
+  string background_image = 7;  // 用户个人页顶部大图
+  string signature = 8; // 个人简介
+  int32 total_favorited = 9;  // 获赞数量
+  int32 work_count = 10;  // 作品数量
+  int32 favorite_count = 11;  // 点赞数量
+}
