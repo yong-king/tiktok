@@ -129,3 +129,25 @@ func (s *UserServiceService) BatchGetUserDetailInfo(ctx context.Context, req *pb
 	}
 	return &pb.BatchGetUserDetailInfoReply{User: users}, nil
 }
+
+// 更新用户信息
+func (s *UserServiceService) UpdateUserProfile(ctx context.Context, req *pb.UpdateUserProfileRequest) (*pb.UpdateUserProfileReply, error) {
+	// 1. token解析，参数解析
+	uid, err := s.uc.ParseToken(ctx, req.Token, req.RefreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.uc.UpdateUserProfile(ctx, &param.UpdateUserRequsetParam{
+		ID:              uid,
+		Name:            req.User.Name,
+		Avatar:          req.User.Avatar,
+		BackgroundImage: req.User.BackgroundImage,
+		Signature:       req.User.Signature,
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return &pb.UpdateUserProfileReply{Msg: "success"}, nil
+}

@@ -34,7 +34,20 @@ service UserService {
 
   rpc BatchGetUserInfo(BatchGetUserInfoRequest) returns (BatchGetUserInfoReply);
   rpc BatchGetUserDetailInfo(BatchGetUserDetailInfoRequest) returns (BatchGetUserDetailInfoReply);
+  rpc UpdateUserProfile(UpdateUserProfileRequest) returns (UpdateUserProfileReply);
 }
+
+// =========================更新用户信息============================
+message UpdateUserProfileRequest {
+  User user = 1;
+  string token = 2;
+  string refresh_token = 3;
+}
+
+message UpdateUserProfileReply {
+  string msg = 1;
+}
+
 
 // =========================批量获取用户信息============================
 message BatchGetUserInfoRequest {

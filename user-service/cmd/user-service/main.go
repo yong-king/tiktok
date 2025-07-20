@@ -1,9 +1,14 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
+	"time"
+	"user-service/internal/pkg"
+	"user-service/internal/pkg/metrics"
+	"user-service/internal/pkg/otelsetup"
 
 	"user-service/internal/conf"
 
@@ -62,15 +67,7 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, consulAddr stri
 
 func main() {
 	flag.Parse()
-	logger := log.With(log.NewStdLogger(os.Stdout),
-		"ts", log.DefaultTimestamp,
-		"caller", log.DefaultCaller,
-		"service.id", id,
-		"service.name", Name,
-		"service.version", Version,
-		"trace.id", tracing.TraceID(),
-		"span.id", tracing.SpanID(),
-	)
+
 	c := config.New(
 		config.WithSource(
 			file.NewSource(flagconf),
@@ -82,6 +79,20 @@ func main() {
 		fmt.Println(err)
 		panic(err)
 	}
+
+	var logCfg pkg.LogConfig
+	if err := c.Scan(&logCfg); err != nil {
+		panic(err)
+	}
+	logger := log.With(pkg.NewZapLogger(logCfg),
+		//"ts", log.DefaultTimestamp,
+		//"caller", log.DefaultCaller,
+		"service.id", id,
+		"service.name", Name,
+		"service.version", Version,
+		"trace.id", tracing.TraceID(),
+		"span.id", tracing.SpanID(),
+	)
 
 	var bc conf.Bootstrap
 	if err := c.Scan(&bc); err != nil {
@@ -95,11 +106,27 @@ func main() {
 	Version = bc.Service.Version
 	id = fmt.Sprintf("%s-%s", Name, bc.Server.Http.Addr)
 
+	// ---------------OpenTelemetry--------------------
+	ctx := context.Background()
+	shutdown := otelsetup.InitTracerProvider(ctx, Name)
+	defer func() {
+		ctx, cancel := context.WithTimeout(ctx, time.Second*5)
+		defer cancel()
+		if err := shutdown(ctx); err != nil {
+			log.Fatalf("failed to shutdown tracer: %v", err)
+		}
+	}()
+
 	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Jwt, bc.IdGen, logger, consulAddr)
 	if err != nil {
 		panic(err)
 	}
 	defer cleanup()
+
+	// prometheus 监控
+	metrics.Init()
+
+	metrics.StartMetricsServer()
 
 	// start and wait for stop signal
 	if err := app.Run(); err != nil {

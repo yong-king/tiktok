@@ -3,6 +3,7 @@ package server
 import (
 	v1 "user-service/api/user/v1"
 	"user-service/internal/conf"
+	"user-service/internal/pkg/metrics"
 	"user-service/internal/service"
 
 	"github.com/go-kratos/kratos/v2/log"
@@ -11,11 +12,12 @@ import (
 )
 
 // NewHTTPServer new an HTTP server.
-func NewHTTPServer(c *conf.Server, greeter *service.UserServiceService, logger log.Logger) *http.Server {
+func NewHTTPServer(c *conf.Server, user *service.UserServiceService, logger log.Logger) *http.Server {
 	var opts = []http.ServerOption{
 		http.Middleware(
 			recovery.Recovery(),
 		),
+		http.Filter(metrics.InstrumentHandler),
 	}
 	if c.Http.Network != "" {
 		opts = append(opts, http.Network(c.Http.Network))
@@ -27,6 +29,6 @@ func NewHTTPServer(c *conf.Server, greeter *service.UserServiceService, logger l
 		opts = append(opts, http.Timeout(c.Http.Timeout.AsDuration()))
 	}
 	srv := http.NewServer(opts...)
-	v1.RegisterUserServiceHTTPServer(srv, greeter)
+	v1.RegisterUserServiceHTTPServer(srv, user)
 	return srv
 }

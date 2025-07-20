@@ -1,0 +1,38 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0.36
+    container_name: mysql-dc
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tiktok
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+
+  redis:
+    image: redis:7
+    container_name: redis-dc
+    restart: always
+    ports:
+      - "6379:6379"
+
+  user-service:
+    image: user-service:latest
+    container_name: user-service
+    restart: always
+    depends_on:
+      - mysql
+      - redis
+    ports:
+      - "8000:8080"
+      - "9000:9090"   # 如果你 grpc 监听9000端口
+    volumes:
+      - ./configs/config.yaml:/app/configs/config.yaml
+    command: ["./user-service", "-conf", "/app/configs/config.yaml"]
+
+volumes:
+  mysql-data:

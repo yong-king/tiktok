@@ -22,7 +22,15 @@ idGen:
   start_time: "2025-01-01T00:00:00Z"
 registry:
   consul:
-    addr: 127.0.0.1:8500
+    addr: 0.0.0.0:8500
 service:
   name: user-service
   version: v1.0.0
+log:
+  level: debug
+  path: ../logs/app.log
+  max_size: 100
+  max_backups: 5
+  max_age: 3
+  compress: true
+  console: true

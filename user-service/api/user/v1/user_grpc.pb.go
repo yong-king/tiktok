@@ -27,6 +27,7 @@ const (
 	UserService_CheckUserExistByUserID_FullMethodName = "/user.UserService/CheckUserExistByUserID"
 	UserService_BatchGetUserInfo_FullMethodName       = "/user.UserService/BatchGetUserInfo"
 	UserService_BatchGetUserDetailInfo_FullMethodName = "/user.UserService/BatchGetUserDetailInfo"
+	UserService_UpdateUserProfile_FullMethodName      = "/user.UserService/UpdateUserProfile"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -41,6 +42,7 @@ type UserServiceClient interface {
 	CheckUserExistByUserID(ctx context.Context, in *CheckUserExistByUserIDRequest, opts ...grpc.CallOption) (*CheckUserExistByUserIDReply, error)
 	BatchGetUserInfo(ctx context.Context, in *BatchGetUserInfoRequest, opts ...grpc.CallOption) (*BatchGetUserInfoReply, error)
 	BatchGetUserDetailInfo(ctx context.Context, in *BatchGetUserDetailInfoRequest, opts ...grpc.CallOption) (*BatchGetUserDetailInfoReply, error)
+	UpdateUserProfile(ctx context.Context, in *UpdateUserProfileRequest, opts ...grpc.CallOption) (*UpdateUserProfileReply, error)
 }
 
 type userServiceClient struct {
@@ -131,6 +133,16 @@ func (c *userServiceClient) BatchGetUserDetailInfo(ctx context.Context, in *Batc
 	return out, nil
 }
 
+func (c *userServiceClient) UpdateUserProfile(ctx context.Context, in *UpdateUserProfileRequest, opts ...grpc.CallOption) (*UpdateUserProfileReply, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateUserProfileReply)
+	err := c.cc.Invoke(ctx, UserService_UpdateUserProfile_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServiceServer is the server API for UserService service.
 // All implementations must embed UnimplementedUserServiceServer
 // for forward compatibility.
@@ -143,6 +155,7 @@ type UserServiceServer interface {
 	CheckUserExistByUserID(context.Context, *CheckUserExistByUserIDRequest) (*CheckUserExistByUserIDReply, error)
 	BatchGetUserInfo(context.Context, *BatchGetUserInfoRequest) (*BatchGetUserInfoReply, error)
 	BatchGetUserDetailInfo(context.Context, *BatchGetUserDetailInfoRequest) (*BatchGetUserDetailInfoReply, error)
+	UpdateUserProfile(context.Context, *UpdateUserProfileRequest) (*UpdateUserProfileReply, error)
 	mustEmbedUnimplementedUserServiceServer()
 }
 
@@ -176,6 +189,9 @@ func (UnimplementedUserServiceServer) BatchGetUserInfo(context.Context, *BatchGe
 }
 func (UnimplementedUserServiceServer) BatchGetUserDetailInfo(context.Context, *BatchGetUserDetailInfoRequest) (*BatchGetUserDetailInfoReply, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method BatchGetUserDetailInfo not implemented")
+}
+func (UnimplementedUserServiceServer) UpdateUserProfile(context.Context, *UpdateUserProfileRequest) (*UpdateUserProfileReply, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUserProfile not implemented")
 }
 func (UnimplementedUserServiceServer) mustEmbedUnimplementedUserServiceServer() {}
 func (UnimplementedUserServiceServer) testEmbeddedByValue()                     {}
@@ -342,6 +358,24 @@ func _UserService_BatchGetUserDetailInfo_Handler(srv interface{}, ctx context.Co
 	return interceptor(ctx, in, info, handler)
 }
 
+func _UserService_UpdateUserProfile_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUserProfileRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServiceServer).UpdateUserProfile(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: UserService_UpdateUserProfile_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServiceServer).UpdateUserProfile(ctx, req.(*UpdateUserProfileRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // UserService_ServiceDesc is the grpc.ServiceDesc for UserService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -380,6 +414,10 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "BatchGetUserDetailInfo",
 			Handler:    _UserService_BatchGetUserDetailInfo_Handler,
+		},
+		{
+			MethodName: "UpdateUserProfile",
+			Handler:    _UserService_UpdateUserProfile_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

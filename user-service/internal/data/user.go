@@ -3,11 +3,18 @@ package data
 import (
 	"context"
 	"encoding/json"
+	"errors"
+	"fmt"
+	"github.com/prometheus/client_golang/prometheus"
+	"go.opentelemetry.io/otel/attribute"
 	"gorm.io/datatypes"
 	"gorm.io/gorm"
+	"time"
 	"user-service/internal/biz"
 	"user-service/internal/biz/param"
 	"user-service/internal/data/model"
+	"user-service/internal/pkg/metrics"
+	"user-service/internal/pkg/tracing"
 
 	"github.com/go-kratos/kratos/v2/log"
 )
@@ -27,15 +34,18 @@ func NewUserRepo(data *Data, logger log.Logger) biz.UserRepo {
 
 // 查询用户是否存在
 func (r *userRepo) CheckUserExist(ctx context.Context, userName string) (bool, error) {
+	done := ObserveDuration(metrics.DBQueryDuration, []string{"CheckUserExistByUsername"})
 	_, err := r.data.query.User.
 		WithContext(ctx).
 		Where(r.data.query.User.Username.Eq(userName)).
 		First()
+	done()
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			log.Debugf("user %s not exist", userName)
 			return false, nil
 		}
+		metrics.DBQueryErrorCount.WithLabelValues("CheckUserExistByUsername", err.Error()).Inc()
 		return false, err
 	}
 	return true, nil
@@ -108,6 +118,20 @@ func (r *userRepo) RefreshToken(ctx context.Context, refreshToken string) (strin
 
 // GetUserByUserID 根据用户id获取用户信息
 func (r *userRepo) GetUserByUserID(ctx context.Context, userID int64) (*param.UserInfoParam, error) {
+
+	key := fmt.Sprintf("user:profile:%d", userID)
+
+	// 1️⃣ 尝试从 Redis 获取
+	data, err := r.data.rdb.Get(ctx, key).Bytes()
+	if err == nil {
+		var userInfo param.UserInfoParam
+		if err := json.Unmarshal(data, &userInfo); err == nil {
+			r.log.WithContext(ctx).Debugf("cache hit for user: %d", userID)
+			return &userInfo, nil
+		}
+		// 如果反序列化失败，可继续走 DB 查询
+	}
+
 	user, err := r.data.query.User.
 		WithContext(ctx).
 		Where(r.data.query.User.ID.Eq(userID)).
@@ -116,15 +140,38 @@ func (r *userRepo) GetUserByUserID(ctx context.Context, userID int64) (*param.Us
 	if err != nil {
 		return nil, err
 	}
-	// TODO
-	// 查询follower表中当前用户是否是被查用户的粉丝
-	return &param.UserInfoParam{ID: user.ID, Name: user.Username, FollowCount: user.FollowCount, FollowerCount: user.FollowerCount,
-		Avatar: user.Avatar, BackgroundImage: user.BackgroundImage, Signature: user.Signature, TotalFavorited: user.TotalFavorited,
-		WorkCount: user.WorkCount, FavoriteCount: user.FavoriteCount,
-	}, nil
+
+	userInfo := &param.UserInfoParam{
+		ID:              user.ID,
+		Name:            user.Username,
+		FollowCount:     user.FollowCount,
+		FollowerCount:   user.FollowerCount,
+		Avatar:          user.Avatar,
+		BackgroundImage: user.BackgroundImage,
+		Signature:       user.Signature,
+		TotalFavorited:  user.TotalFavorited,
+		WorkCount:       user.WorkCount,
+		FavoriteCount:   user.FavoriteCount,
+	}
+
+	// 3️ 回填 Redis 缓存
+	jsonData, err := json.Marshal(userInfo)
+	if err == nil {
+		err = r.data.rdb.Set(ctx, key, jsonData, 24*time.Hour).Err()
+		if err != nil {
+			r.log.WithContext(ctx).Warnf("Redis set user profile error: %v", err)
+		}
+	}
+
+	return userInfo, nil
 }
 
 func (r *userRepo) ParseToken(ctx context.Context, token, refreshToken string) (int64, error) {
+	ctx, span := tracing.StartSpan(ctx, "userRepo.ParseToken",
+		attribute.Int("token.length", len(token)),
+	)
+	defer span.End()
+	
 	t, err := r.data.jwt.VerifyAndRefreshTokens(ctx, token, refreshToken)
 	if err != nil {
 		return 0, err
@@ -137,6 +184,7 @@ func (r *userRepo) ParseToken(ctx context.Context, token, refreshToken string) (
 }
 
 func (r *userRepo) CheckUserExistByUserID(ctx context.Context, userID int64) (bool, error) {
+
 	_, err := r.data.query.User.WithContext(ctx).Where(r.data.query.User.ID.Eq(userID)).First()
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -205,4 +253,47 @@ func (r *userRepo) BatchGetUserDetailInfo(ctx context.Context, userIds []int64) 
 		})
 	}
 	return userInfos, nil
+}
+
+func (r *userRepo) UpdateUserProfile(ctx context.Context, requestParam *param.UpdateUserRequsetParam) error {
+	txQuery := r.data.query.User
+
+	// 构造需要更新的字段
+	updateColumns := make(map[string]interface{})
+	if requestParam.Name != "" {
+		updateColumns["username"] = requestParam.Name
+	}
+	if requestParam.Avatar != "" {
+		updateColumns["avatar"] = requestParam.Avatar
+	}
+	if requestParam.Signature != "" {
+		updateColumns["signature"] = requestParam.Signature
+	}
+
+	// 防止空更新
+	if len(updateColumns) == 0 {
+		return errors.New("no fields to update")
+	}
+
+	// 1️⃣ DB 更新
+	_, err := txQuery.WithContext(ctx).Where(txQuery.ID.Eq(requestParam.ID)).Updates(updateColumns)
+	if err != nil {
+		return err
+	}
+
+	// 删除缓存，下次要读取时在读取到缓存中
+	key := fmt.Sprintf("user:profile:%d", requestParam.ID)
+	if err := r.data.rdb.Del(ctx, key).Err(); err != nil {
+		r.log.WithContext(ctx).Warnf("Redis DEL user profile error: %v", err)
+		return err
+	}
+	return nil
+}
+
+// ObserveDuration Prometheus 监控
+func ObserveDuration(histogram *prometheus.HistogramVec, labels []string) func() {
+	start := time.Now()
+	return func() {
+		histogram.WithLabelValues(labels...).Observe(time.Since(start).Seconds())
+	}
 }

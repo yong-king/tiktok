@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/golang-jwt/jwt/v5"
 	"time"
+	"user-service/internal/pkg/tracing"
 )
 
 type CustomClaims struct {
@@ -72,6 +73,10 @@ func (j *JWTManager) CreateToken(ctx context.Context, userID int64) (accessToken
 
 // ParseToken 解析 token
 func (j *JWTManager) ParseToken(ctx context.Context, tokenString string) (*CustomClaims, error) {
+
+	ctx, span := tracing.StartSpan(ctx, "JWTManager.ParseToken")
+	defer span.End()
+
 	token, err := jwt.ParseWithClaims(tokenString, &CustomClaims{}, func(t *jwt.Token) (interface{}, error) {
 		return j.secretKey, nil
 	})
@@ -106,6 +111,10 @@ func (j *JWTManager) RefreshAccessToken(ctx context.Context, refreshToken string
 }
 
 func (j *JWTManager) VerifyAndRefreshTokens(ctx context.Context, accessToken, refreshToken string) (string, error) {
+
+	ctx, span := tracing.StartSpan(ctx, "JWTManager.VerifyAndRefreshTokens")
+	defer span.End()
+
 	// 1. 先校验 Access Token
 	_, err := j.ParseToken(ctx, accessToken)
 	if err == nil {

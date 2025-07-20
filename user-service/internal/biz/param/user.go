@@ -55,3 +55,11 @@ type Author struct {
 	Name      string
 	AvatarURL string
 }
+
+type UpdateUserRequsetParam struct {
+	ID              int64
+	Name            string
+	Avatar          string
+	BackgroundImage string
+	Signature       string
+}

@@ -12,6 +12,7 @@ message Bootstrap {
   IDGen idGen = 4;
   Registry registry = 5;
   Service service = 6;
+  Log log = 7;
 }
 
 message Service {
@@ -65,4 +66,14 @@ message Registry {
   message Consul {
     string addr = 1;
   }
+}
+
+message Log {
+  string level = 1;
+  string path = 2;
+  int32 max_size = 3;
+  int32 max_backups = 4;
+  int32 max_age = 5;
+  bool compress = 6;
+  bool console = 7;
 }

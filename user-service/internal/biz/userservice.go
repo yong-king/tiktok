@@ -23,6 +23,7 @@ type UserRepo interface {
 	CheckUserExistByUserID(context.Context, int64) (bool, error)
 	BatchGetUserInfo(ctx context.Context, userIds []int64) ([]*param.Author, error)
 	BatchGetUserDetailInfo(ctx context.Context, userIds []int64) ([]*param.UserInfoParam, error)
+	UpdateUserProfile(ctx context.Context, requsetParam *param.UpdateUserRequsetParam) error
 }
 
 // UserService 用户相关业务逻辑封装
@@ -200,4 +201,9 @@ func (uc *UserService) BatchGetUserDetailInfo(ctx context.Context, userIds []int
 		})
 	}
 	return userList, nil
+}
+
+func (uc *UserService) UpdateUserProfile(ctx context.Context, param *param.UpdateUserRequsetParam) error {
+	uc.log.WithContext(ctx).Debugf("UpdateUserProfile: %v", param)
+	return uc.repo.UpdateUserProfile(ctx, param)
 }
