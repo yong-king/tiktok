@@ -8,9 +8,9 @@ server:
 data:
   database:
     driver: mysql
-    source: root:root@tcp(127.0.0.1:3306)/tiktok?parseTime=True&loc=Local
+    source: root:root@tcp(mysql:3306)/tiktok?parseTime=True&loc=Local
   redis:
-    addr: 127.0.0.1:6379
+    addr: redis:6379
     read_timeout: 0.2s
     write_timeout: 0.2s
   user_service:
@@ -19,7 +19,7 @@ data:
     endpoint: discovery:///video-service
 registry:
   consul:
-    addr: 127.0.0.1:8500
+    addr: consul-server:8500
     scheme: http
 service:
   name: comment-service
@@ -27,5 +27,5 @@ service:
 idGen:
   machine_id: 3
   start_time: "2025-01-01T00:00:00Z"
-OpenTelemetry:
-  open_telemetry: "jaeger:4317"
+open_telemetry:
+  endpoint: "jaeger:4317"

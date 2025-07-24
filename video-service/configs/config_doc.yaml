@@ -10,13 +10,13 @@ server:
 data:
   database:
     driver: mysql
-    source: root:root@tcp(127.0.0.1:3306)/tiktok?parseTime=True&loc=Local
+    source: root:root@tcp(mysql:3306)/tiktok?parseTime=True&loc=Local
   redis:
-    addr: 127.0.0.1:6379
+    addr: redis:6379
     read_timeout: 0.2s
     write_timeout: 0.2s
   minio:
-    endpoint: 127.0.0.1:9000
+    endpoint: minio:9000
     bucketName: video-files
     accessKeyID: admin
     secretAccessKey: admin123
@@ -32,12 +32,15 @@ idGen:
   start_time: "2025-01-01T00:00:00Z"
 registry:
   consul:
-    addr: 127.0.0.1:8500
-    scheme: http
+    addr: consul-server:8500
+  advertise:
+    addr: video-service:9082
 service:
   name: video-service
   version: v1.0.0
 elasticsearch:
   addresses:
-    - "http://127.0.0.1:9200"
+    - "elasticsearch:9200"
   index: "tiktok_videos"
+open_telemetry:
+  endpoint:  "jaeger:4317"

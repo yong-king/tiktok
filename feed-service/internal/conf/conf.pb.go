@@ -637,6 +637,7 @@ func (x *Data_VideoService) GetEndpoint() string {
 type Registry_Consul struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Addr          string                 `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	Scheme        string                 `protobuf:"bytes,2,opt,name=scheme,proto3" json:"scheme,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -674,6 +675,13 @@ func (*Registry_Consul) Descriptor() ([]byte, []int) {
 func (x *Registry_Consul) GetAddr() string {
 	if x != nil {
 		return x.Addr
+	}
+	return ""
+}
+
+func (x *Registry_Consul) GetScheme() string {
+	if x != nil {
+		return x.Scheme
 	}
 	return ""
 }
@@ -716,11 +724,12 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\vUserService\x12\x1a\n" +
 	"\bendpoint\x18\x01 \x01(\tR\bendpoint\x1a*\n" +
 	"\fVideoService\x12\x1a\n" +
-	"\bendpoint\x18\x01 \x01(\tR\bendpoint\"]\n" +
+	"\bendpoint\x18\x01 \x01(\tR\bendpoint\"u\n" +
 	"\bRegistry\x123\n" +
-	"\x06consul\x18\x01 \x01(\v2\x1b.kratos.api.Registry.ConsulR\x06consul\x1a\x1c\n" +
+	"\x06consul\x18\x01 \x01(\v2\x1b.kratos.api.Registry.ConsulR\x06consul\x1a4\n" +
 	"\x06Consul\x12\x12\n" +
-	"\x04addr\x18\x01 \x01(\tR\x04addr\"7\n" +
+	"\x04addr\x18\x01 \x01(\tR\x04addr\x12\x16\n" +
+	"\x06scheme\x18\x02 \x01(\tR\x06scheme\"7\n" +
 	"\aService\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversionB!Z\x1ffeed-service/internal/conf;confb\x06proto3"

@@ -100,8 +100,8 @@ func (r *feedRepo) BatchGetVideoCountsFromCache(ctx context.Context, ids []int64
 	commentCounts := make(map[int64]int64)
 
 	pipe := r.data.rdb.Pipeline()
-	likeCmds := make([]*redis.StringCmd, 0, len(ids))
-	commentCmds := make([]*redis.StringCmd, 0, len(ids))
+	likeCmds := make([]*redis.StringCmd, len(ids))
+	commentCmds := make([]*redis.StringCmd, len(ids))
 
 	for i, id := range ids {
 		likeCmds[i] = pipe.Get(ctx, fmt.Sprintf("video:favorite:%d", id))

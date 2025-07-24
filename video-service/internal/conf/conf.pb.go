@@ -31,6 +31,7 @@ type Bootstrap struct {
 	Registry      *Registry              `protobuf:"bytes,5,opt,name=registry,proto3" json:"registry,omitempty"`
 	Service       *Service               `protobuf:"bytes,6,opt,name=service,proto3" json:"service,omitempty"`
 	Elasticsearch *Elasticsearch         `protobuf:"bytes,7,opt,name=elasticsearch,proto3" json:"elasticsearch,omitempty"`
+	OpenTelemetry *OpenTelemetry         `protobuf:"bytes,8,opt,name=open_telemetry,json=openTelemetry,proto3" json:"open_telemetry,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -110,6 +111,13 @@ func (x *Bootstrap) GetService() *Service {
 func (x *Bootstrap) GetElasticsearch() *Elasticsearch {
 	if x != nil {
 		return x.Elasticsearch
+	}
+	return nil
+}
+
+func (x *Bootstrap) GetOpenTelemetry() *OpenTelemetry {
+	if x != nil {
+		return x.OpenTelemetry
 	}
 	return nil
 }
@@ -357,6 +365,7 @@ func (x *IDGen) GetStartTime() string {
 type Registry struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Consul        *Registry_Consul       `protobuf:"bytes,1,opt,name=consul,proto3" json:"consul,omitempty"`
+	Advertise     *Registry_Advertise    `protobuf:"bytes,2,opt,name=advertise,proto3" json:"advertise,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -394,6 +403,13 @@ func (*Registry) Descriptor() ([]byte, []int) {
 func (x *Registry) GetConsul() *Registry_Consul {
 	if x != nil {
 		return x.Consul
+	}
+	return nil
+}
+
+func (x *Registry) GetAdvertise() *Registry_Advertise {
+	if x != nil {
+		return x.Advertise
 	}
 	return nil
 }
@@ -502,6 +518,50 @@ func (x *Elasticsearch) GetIndex() string {
 	return ""
 }
 
+type OpenTelemetry struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Endpoint      string                 `protobuf:"bytes,1,opt,name=endpoint,proto3" json:"endpoint,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *OpenTelemetry) Reset() {
+	*x = OpenTelemetry{}
+	mi := &file_conf_conf_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *OpenTelemetry) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*OpenTelemetry) ProtoMessage() {}
+
+func (x *OpenTelemetry) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use OpenTelemetry.ProtoReflect.Descriptor instead.
+func (*OpenTelemetry) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{8}
+}
+
+func (x *OpenTelemetry) GetEndpoint() string {
+	if x != nil {
+		return x.Endpoint
+	}
+	return ""
+}
+
 type Server_HTTP struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Network       string                 `protobuf:"bytes,1,opt,name=network,proto3" json:"network,omitempty"`
@@ -513,7 +573,7 @@ type Server_HTTP struct {
 
 func (x *Server_HTTP) Reset() {
 	*x = Server_HTTP{}
-	mi := &file_conf_conf_proto_msgTypes[8]
+	mi := &file_conf_conf_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -525,7 +585,7 @@ func (x *Server_HTTP) String() string {
 func (*Server_HTTP) ProtoMessage() {}
 
 func (x *Server_HTTP) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[8]
+	mi := &file_conf_conf_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -573,7 +633,7 @@ type Server_GRPC struct {
 
 func (x *Server_GRPC) Reset() {
 	*x = Server_GRPC{}
-	mi := &file_conf_conf_proto_msgTypes[9]
+	mi := &file_conf_conf_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -585,7 +645,7 @@ func (x *Server_GRPC) String() string {
 func (*Server_GRPC) ProtoMessage() {}
 
 func (x *Server_GRPC) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[9]
+	mi := &file_conf_conf_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -631,7 +691,7 @@ type Server_GIN struct {
 
 func (x *Server_GIN) Reset() {
 	*x = Server_GIN{}
-	mi := &file_conf_conf_proto_msgTypes[10]
+	mi := &file_conf_conf_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -643,7 +703,7 @@ func (x *Server_GIN) String() string {
 func (*Server_GIN) ProtoMessage() {}
 
 func (x *Server_GIN) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[10]
+	mi := &file_conf_conf_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -676,7 +736,7 @@ type Data_Database struct {
 
 func (x *Data_Database) Reset() {
 	*x = Data_Database{}
-	mi := &file_conf_conf_proto_msgTypes[11]
+	mi := &file_conf_conf_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -688,7 +748,7 @@ func (x *Data_Database) String() string {
 func (*Data_Database) ProtoMessage() {}
 
 func (x *Data_Database) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[11]
+	mi := &file_conf_conf_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -730,7 +790,7 @@ type Data_Redis struct {
 
 func (x *Data_Redis) Reset() {
 	*x = Data_Redis{}
-	mi := &file_conf_conf_proto_msgTypes[12]
+	mi := &file_conf_conf_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -742,7 +802,7 @@ func (x *Data_Redis) String() string {
 func (*Data_Redis) ProtoMessage() {}
 
 func (x *Data_Redis) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[12]
+	mi := &file_conf_conf_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -799,7 +859,7 @@ type Data_MinIO struct {
 
 func (x *Data_MinIO) Reset() {
 	*x = Data_MinIO{}
-	mi := &file_conf_conf_proto_msgTypes[13]
+	mi := &file_conf_conf_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -811,7 +871,7 @@ func (x *Data_MinIO) String() string {
 func (*Data_MinIO) ProtoMessage() {}
 
 func (x *Data_MinIO) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[13]
+	mi := &file_conf_conf_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -871,7 +931,7 @@ type Data_UserService struct {
 
 func (x *Data_UserService) Reset() {
 	*x = Data_UserService{}
-	mi := &file_conf_conf_proto_msgTypes[14]
+	mi := &file_conf_conf_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -883,7 +943,7 @@ func (x *Data_UserService) String() string {
 func (*Data_UserService) ProtoMessage() {}
 
 func (x *Data_UserService) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[14]
+	mi := &file_conf_conf_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -909,13 +969,14 @@ func (x *Data_UserService) GetEndpoint() string {
 type Registry_Consul struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Addr          string                 `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	Scheme        string                 `protobuf:"bytes,2,opt,name=scheme,proto3" json:"scheme,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *Registry_Consul) Reset() {
 	*x = Registry_Consul{}
-	mi := &file_conf_conf_proto_msgTypes[15]
+	mi := &file_conf_conf_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -927,7 +988,7 @@ func (x *Registry_Consul) String() string {
 func (*Registry_Consul) ProtoMessage() {}
 
 func (x *Registry_Consul) ProtoReflect() protoreflect.Message {
-	mi := &file_conf_conf_proto_msgTypes[15]
+	mi := &file_conf_conf_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -950,12 +1011,63 @@ func (x *Registry_Consul) GetAddr() string {
 	return ""
 }
 
+func (x *Registry_Consul) GetScheme() string {
+	if x != nil {
+		return x.Scheme
+	}
+	return ""
+}
+
+type Registry_Advertise struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Addr          string                 `protobuf:"bytes,1,opt,name=addr,proto3" json:"addr,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Registry_Advertise) Reset() {
+	*x = Registry_Advertise{}
+	mi := &file_conf_conf_proto_msgTypes[17]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Registry_Advertise) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Registry_Advertise) ProtoMessage() {}
+
+func (x *Registry_Advertise) ProtoReflect() protoreflect.Message {
+	mi := &file_conf_conf_proto_msgTypes[17]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Registry_Advertise.ProtoReflect.Descriptor instead.
+func (*Registry_Advertise) Descriptor() ([]byte, []int) {
+	return file_conf_conf_proto_rawDescGZIP(), []int{5, 1}
+}
+
+func (x *Registry_Advertise) GetAddr() string {
+	if x != nil {
+		return x.Addr
+	}
+	return ""
+}
+
 var File_conf_conf_proto protoreflect.FileDescriptor
 
 const file_conf_conf_proto_rawDesc = "" +
 	"\n" +
 	"\x0fconf/conf.proto\x12\n" +
-	"kratos.api\x1a\x1egoogle/protobuf/duration.proto\"\xcb\x02\n" +
+	"kratos.api\x1a\x1egoogle/protobuf/duration.proto\"\x8d\x03\n" +
 	"\tBootstrap\x12*\n" +
 	"\x06server\x18\x01 \x01(\v2\x12.kratos.api.ServerR\x06server\x12$\n" +
 	"\x04data\x18\x02 \x01(\v2\x10.kratos.api.DataR\x04data\x12!\n" +
@@ -963,7 +1075,8 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\x05idGen\x18\x04 \x01(\v2\x11.kratos.api.IDGenR\x05idGen\x120\n" +
 	"\bregistry\x18\x05 \x01(\v2\x14.kratos.api.RegistryR\bregistry\x12-\n" +
 	"\aservice\x18\x06 \x01(\v2\x13.kratos.api.ServiceR\aservice\x12?\n" +
-	"\relasticsearch\x18\a \x01(\v2\x19.kratos.api.ElasticsearchR\relasticsearch\"\xfd\x02\n" +
+	"\relasticsearch\x18\a \x01(\v2\x19.kratos.api.ElasticsearchR\relasticsearch\x12@\n" +
+	"\x0eopen_telemetry\x18\b \x01(\v2\x19.kratos.api.OpenTelemetryR\ropenTelemetry\"\xfd\x02\n" +
 	"\x06Server\x12+\n" +
 	"\x04http\x18\x01 \x01(\v2\x17.kratos.api.Server.HTTPR\x04http\x12+\n" +
 	"\x04grpc\x18\x02 \x01(\v2\x17.kratos.api.Server.GRPCR\x04grpc\x12(\n" +
@@ -1009,17 +1122,23 @@ const file_conf_conf_proto_rawDesc = "" +
 	"\n" +
 	"machine_id\x18\x01 \x01(\rR\tmachineId\x12\x1d\n" +
 	"\n" +
-	"start_time\x18\x02 \x01(\tR\tstartTime\"]\n" +
+	"start_time\x18\x02 \x01(\tR\tstartTime\"\xd4\x01\n" +
 	"\bRegistry\x123\n" +
-	"\x06consul\x18\x01 \x01(\v2\x1b.kratos.api.Registry.ConsulR\x06consul\x1a\x1c\n" +
+	"\x06consul\x18\x01 \x01(\v2\x1b.kratos.api.Registry.ConsulR\x06consul\x12<\n" +
+	"\tadvertise\x18\x02 \x01(\v2\x1e.kratos.api.Registry.AdvertiseR\tadvertise\x1a4\n" +
 	"\x06Consul\x12\x12\n" +
+	"\x04addr\x18\x01 \x01(\tR\x04addr\x12\x16\n" +
+	"\x06scheme\x18\x02 \x01(\tR\x06scheme\x1a\x1f\n" +
+	"\tAdvertise\x12\x12\n" +
 	"\x04addr\x18\x01 \x01(\tR\x04addr\"7\n" +
 	"\aService\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x18\n" +
 	"\aversion\x18\x02 \x01(\tR\aversion\"C\n" +
 	"\rElasticsearch\x12\x1c\n" +
 	"\taddresses\x18\x01 \x03(\tR\taddresses\x12\x14\n" +
-	"\x05index\x18\x02 \x01(\tR\x05indexB\"Z video-service/internal/conf;confb\x06proto3"
+	"\x05index\x18\x02 \x01(\tR\x05index\"+\n" +
+	"\rOpenTelemetry\x12\x1a\n" +
+	"\bendpoint\x18\x01 \x01(\tR\bendpointB\"Z video-service/internal/conf;confb\x06proto3"
 
 var (
 	file_conf_conf_proto_rawDescOnce sync.Once
@@ -1033,7 +1152,7 @@ func file_conf_conf_proto_rawDescGZIP() []byte {
 	return file_conf_conf_proto_rawDescData
 }
 
-var file_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 16)
+var file_conf_conf_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
 var file_conf_conf_proto_goTypes = []any{
 	(*Bootstrap)(nil),           // 0: kratos.api.Bootstrap
 	(*Server)(nil),              // 1: kratos.api.Server
@@ -1043,15 +1162,17 @@ var file_conf_conf_proto_goTypes = []any{
 	(*Registry)(nil),            // 5: kratos.api.Registry
 	(*Service)(nil),             // 6: kratos.api.Service
 	(*Elasticsearch)(nil),       // 7: kratos.api.Elasticsearch
-	(*Server_HTTP)(nil),         // 8: kratos.api.Server.HTTP
-	(*Server_GRPC)(nil),         // 9: kratos.api.Server.GRPC
-	(*Server_GIN)(nil),          // 10: kratos.api.Server.GIN
-	(*Data_Database)(nil),       // 11: kratos.api.Data.Database
-	(*Data_Redis)(nil),          // 12: kratos.api.Data.Redis
-	(*Data_MinIO)(nil),          // 13: kratos.api.Data.MinIO
-	(*Data_UserService)(nil),    // 14: kratos.api.Data.UserService
-	(*Registry_Consul)(nil),     // 15: kratos.api.Registry.Consul
-	(*durationpb.Duration)(nil), // 16: google.protobuf.Duration
+	(*OpenTelemetry)(nil),       // 8: kratos.api.OpenTelemetry
+	(*Server_HTTP)(nil),         // 9: kratos.api.Server.HTTP
+	(*Server_GRPC)(nil),         // 10: kratos.api.Server.GRPC
+	(*Server_GIN)(nil),          // 11: kratos.api.Server.GIN
+	(*Data_Database)(nil),       // 12: kratos.api.Data.Database
+	(*Data_Redis)(nil),          // 13: kratos.api.Data.Redis
+	(*Data_MinIO)(nil),          // 14: kratos.api.Data.MinIO
+	(*Data_UserService)(nil),    // 15: kratos.api.Data.UserService
+	(*Registry_Consul)(nil),     // 16: kratos.api.Registry.Consul
+	(*Registry_Advertise)(nil),  // 17: kratos.api.Registry.Advertise
+	(*durationpb.Duration)(nil), // 18: google.protobuf.Duration
 }
 var file_conf_conf_proto_depIdxs = []int32{
 	1,  // 0: kratos.api.Bootstrap.server:type_name -> kratos.api.Server
@@ -1061,23 +1182,25 @@ var file_conf_conf_proto_depIdxs = []int32{
 	5,  // 4: kratos.api.Bootstrap.registry:type_name -> kratos.api.Registry
 	6,  // 5: kratos.api.Bootstrap.service:type_name -> kratos.api.Service
 	7,  // 6: kratos.api.Bootstrap.elasticsearch:type_name -> kratos.api.Elasticsearch
-	8,  // 7: kratos.api.Server.http:type_name -> kratos.api.Server.HTTP
-	9,  // 8: kratos.api.Server.grpc:type_name -> kratos.api.Server.GRPC
-	10, // 9: kratos.api.Server.gin:type_name -> kratos.api.Server.GIN
-	11, // 10: kratos.api.Data.database:type_name -> kratos.api.Data.Database
-	12, // 11: kratos.api.Data.redis:type_name -> kratos.api.Data.Redis
-	13, // 12: kratos.api.Data.minio:type_name -> kratos.api.Data.MinIO
-	14, // 13: kratos.api.Data.user_service:type_name -> kratos.api.Data.UserService
-	15, // 14: kratos.api.Registry.consul:type_name -> kratos.api.Registry.Consul
-	16, // 15: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
-	16, // 16: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
-	16, // 17: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
-	16, // 18: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
-	19, // [19:19] is the sub-list for method output_type
-	19, // [19:19] is the sub-list for method input_type
-	19, // [19:19] is the sub-list for extension type_name
-	19, // [19:19] is the sub-list for extension extendee
-	0,  // [0:19] is the sub-list for field type_name
+	8,  // 7: kratos.api.Bootstrap.open_telemetry:type_name -> kratos.api.OpenTelemetry
+	9,  // 8: kratos.api.Server.http:type_name -> kratos.api.Server.HTTP
+	10, // 9: kratos.api.Server.grpc:type_name -> kratos.api.Server.GRPC
+	11, // 10: kratos.api.Server.gin:type_name -> kratos.api.Server.GIN
+	12, // 11: kratos.api.Data.database:type_name -> kratos.api.Data.Database
+	13, // 12: kratos.api.Data.redis:type_name -> kratos.api.Data.Redis
+	14, // 13: kratos.api.Data.minio:type_name -> kratos.api.Data.MinIO
+	15, // 14: kratos.api.Data.user_service:type_name -> kratos.api.Data.UserService
+	16, // 15: kratos.api.Registry.consul:type_name -> kratos.api.Registry.Consul
+	17, // 16: kratos.api.Registry.advertise:type_name -> kratos.api.Registry.Advertise
+	18, // 17: kratos.api.Server.HTTP.timeout:type_name -> google.protobuf.Duration
+	18, // 18: kratos.api.Server.GRPC.timeout:type_name -> google.protobuf.Duration
+	18, // 19: kratos.api.Data.Redis.read_timeout:type_name -> google.protobuf.Duration
+	18, // 20: kratos.api.Data.Redis.write_timeout:type_name -> google.protobuf.Duration
+	21, // [21:21] is the sub-list for method output_type
+	21, // [21:21] is the sub-list for method input_type
+	21, // [21:21] is the sub-list for extension type_name
+	21, // [21:21] is the sub-list for extension extendee
+	0,  // [0:21] is the sub-list for field type_name
 }
 
 func init() { file_conf_conf_proto_init() }
@@ -1091,7 +1214,7 @@ func file_conf_conf_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_conf_conf_proto_rawDesc), len(file_conf_conf_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   16,
+			NumMessages:   18,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

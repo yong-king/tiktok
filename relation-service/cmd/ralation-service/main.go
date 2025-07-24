@@ -3,8 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
-	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
-	"github.com/hashicorp/consul/api"
+	"github.com/go-kratos/kratos/v2/registry"
 	"os"
 
 	"ralation-service/internal/conf"
@@ -36,7 +35,7 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "../configs", "config path, eg: -conf config.yaml")
 }
 
-func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, reg *consul.Registry) *kratos.App {
+func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, reg registry.Registrar) *kratos.App {
 	return kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
@@ -83,16 +82,7 @@ func main() {
 	Version = bc.Service.Version
 	id = fmt.Sprintf("%s:%s", Name, bc.Server.Http.Addr)
 
-	// ---------------consul--------------------
-	consulCfg := api.DefaultConfig()
-	consulCfg.Address = bc.Registry.Consul.Addr
-	client, err := api.NewClient(consulCfg)
-	if err != nil {
-		panic(err)
-	}
-	reg := consul.New(client)
-
-	app, cleanup, err := wireApp(bc.Server, bc.Data, logger, reg, bc.Elasticsearch)
+	app, cleanup, err := wireApp(bc.Server, bc.Data, logger, bc.Registry, bc.Elasticsearch)
 	if err != nil {
 		panic(err)
 	}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
+	"github.com/go-kratos/kratos/v2/registry"
 	"os"
 	"time"
 	"user-service/internal/pkg"
@@ -12,7 +13,6 @@ import (
 
 	"user-service/internal/conf"
 
-	consul "github.com/go-kratos/kratos/contrib/registry/consul/v2"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/config"
 	"github.com/go-kratos/kratos/v2/config/file"
@@ -20,8 +20,6 @@ import (
 	"github.com/go-kratos/kratos/v2/middleware/tracing"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
 	"github.com/go-kratos/kratos/v2/transport/http"
-	"github.com/hashicorp/consul/api"
-
 	_ "go.uber.org/automaxprocs"
 )
 
@@ -41,15 +39,7 @@ func init() {
 	flag.StringVar(&flagconf, "conf", "../configs", "config path, eg: -conf config.yaml")
 }
 
-func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, consulAddr string) *kratos.App {
-	// new consul client
-	consulCfg := api.DefaultConfig()
-	consulCfg.Address = consulAddr
-	client, err := api.NewClient(consulCfg)
-	if err != nil {
-		panic(err)
-	}
-	reg := consul.New(client)
+func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, r registry.Registrar) *kratos.App {
 
 	return kratos.New(
 		kratos.ID(id),
@@ -61,7 +51,7 @@ func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, consulAddr stri
 			gs,
 			hs,
 		),
-		kratos.Registrar(reg),
+		kratos.Registrar(r),
 	)
 }
 
@@ -101,14 +91,14 @@ func main() {
 
 	log.Debugf("bootstrap: %+v", bc)
 
-	consulAddr := bc.Registry.Consul.Addr
+	//consulAddr := bc.Registry.Consul.Addr
 	Name = bc.Service.Name
 	Version = bc.Service.Version
 	id = fmt.Sprintf("%s-%s", Name, bc.Server.Http.Addr)
 
 	// ---------------OpenTelemetry--------------------
 	ctx := context.Background()
-	shutdown := otelsetup.InitTracerProvider(ctx, Name)
+	shutdown := otelsetup.InitTracerProvider(ctx, Name, bc.OpenTelemetry)
 	defer func() {
 		ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 		defer cancel()
@@ -117,7 +107,7 @@ func main() {
 		}
 	}()
 
-	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Jwt, bc.IdGen, logger, consulAddr)
+	app, cleanup, err := wireApp(bc.Server, bc.Data, bc.Jwt, bc.IdGen, logger, bc.Registry, bc.OpenTelemetry)
 	if err != nil {
 		panic(err)
 	}

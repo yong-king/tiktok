@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
+	"github.com/go-kratos/kratos/v2/registry"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
+	"github.com/hashicorp/consul/api"
 	"github.com/redis/go-redis/v9"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
@@ -21,7 +23,7 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewFeedRepo, NewDB, NewRedisClient)
+var ProviderSet = wire.NewSet(NewData, NewFeedRepo, NewDB, NewRedisClient, NewDiscover, NewUserServiceClient, NewVideoServiceClient)
 
 // Data .
 type Data struct {
@@ -36,27 +38,13 @@ type Data struct {
 }
 
 // NewData .
-func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client, rr *consul.Registry) (*Data, func(), error) {
+func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client, cu pbUser.UserServiceClient, cv pbVideo.VideoServiceClient) (*Data, func(), error) {
 	cleanup := func() {
 		log.NewHelper(logger).Info("closing the data resources")
 	}
 	query.SetDefault(db)
 
-	conn, err := grpc.DialInsecure(
-		context.Background(),
-		grpc.WithEndpoint(c.UserService.Endpoint),
-		grpc.WithDiscovery(rr),
-	)
-
-	connVideo, err := grpc.DialInsecure(
-		context.Background(),
-		grpc.WithEndpoint(c.VideoService.Endpoint),
-		grpc.WithDiscovery(rr),
-	)
-	if err != nil {
-		return nil, nil, err
-	}
-	return &Data{log: log.NewHelper(logger), db: db, rdb: rdb, query: query.Q, UserClient: pbUser.NewUserServiceClient(conn), VideoClient: pbVideo.NewVideoServiceClient(connVideo)}, cleanup, nil
+	return &Data{log: log.NewHelper(logger), db: db, rdb: rdb, query: query.Q, UserClient: cu, VideoClient: cv}, cleanup, nil
 }
 
 // NewDB 数据库连接
@@ -77,4 +65,45 @@ func NewRedisClient(cfg *conf.Data) *redis.Client {
 		WriteTimeout: cfg.Redis.WriteTimeout.AsDuration(),
 		ReadTimeout:  cfg.Redis.ReadTimeout.AsDuration(),
 	})
+}
+
+func NewDiscover(cfg *conf.Registry) registry.Discovery {
+	// new consul client
+	c := api.DefaultConfig()
+	c.Address = cfg.Consul.Addr
+	c.Scheme = cfg.Consul.Scheme
+	client, err := api.NewClient(c)
+	if err != nil {
+		panic(err)
+	}
+	// new dis with consul client
+	reg := consul.New(client)
+	return reg
+}
+
+func NewUserServiceClient(c *conf.Data, rr registry.Discovery) pbUser.UserServiceClient {
+	conn, err := grpc.DialInsecure(
+		context.Background(),
+		grpc.WithEndpoint(c.UserService.Endpoint),
+		grpc.WithDiscovery(rr),
+	)
+	if err != nil {
+		panic(err)
+	}
+	return pbUser.NewUserServiceClient(conn)
+}
+
+func NewVideoServiceClient(c *conf.Data, rr registry.Discovery) pbVideo.VideoServiceClient {
+	conn, err := grpc.DialInsecure(
+		context.Background(),
+		grpc.WithEndpoint(c.VideoService.Endpoint),
+		grpc.WithDiscovery(rr),
+	)
+	if err != nil {
+		panic(err)
+	}
+	if conn == nil {
+		panic("grpc connection for video-service is nil")
+	}
+	return pbVideo.NewVideoServiceClient(conn)
 }

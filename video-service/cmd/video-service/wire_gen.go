@@ -7,7 +7,6 @@
 package main
 
 import (
-	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 	"video-service/internal/biz"
@@ -25,7 +24,7 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger, jwt *conf.JWT, data_MinIO *conf.Data_MinIO, idGen *conf.IDGen, registry *consul.Registry, elasticsearch *conf.Elasticsearch) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger, jwt *conf.JWT, data_MinIO *conf.Data_MinIO, idGen *conf.IDGen, registry *conf.Registry, elasticsearch *conf.Elasticsearch, openTelemetry *conf.OpenTelemetry) (*kratos.App, func(), error) {
 	jwtManager := pkg.NewJWTManagerProvider(jwt)
 	minioUploader := pkg.NewMinioUploaderProvider(data_MinIO)
 	db, err := data.NewDB(confData)
@@ -34,11 +33,13 @@ func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger, jw
 	}
 	client := data.NewRedisClient(confData)
 	idGenerator := pkg.NewIDGenerator(idGen)
+	discovery := data.NewDiscover(registry)
+	userServiceClient := data.NewUserServiceClient(confData, discovery)
 	typedClient, err := data.NewEsClient(elasticsearch)
 	if err != nil {
 		return nil, nil, err
 	}
-	dataData, cleanup, err := data.NewData(confData, logger, jwtManager, minioUploader, db, client, idGenerator, registry, elasticsearch, typedClient)
+	dataData, cleanup, err := data.NewData(confData, logger, jwtManager, minioUploader, db, client, idGenerator, userServiceClient, elasticsearch, typedClient)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -47,7 +48,8 @@ func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger, jw
 	videoService := service.NewVideoService(videoUsecase)
 	grpcServer := server.NewGRPCServer(confServer, videoService, logger)
 	httpServer := server.NewHTTPServer(confServer, videoService, logger)
-	app, cleanup2, err := newAppWithService(logger, grpcServer, httpServer, videoService, registry)
+	registrar := server.NewRegistry(registry)
+	app, cleanup2, err := newAppWithService(logger, grpcServer, httpServer, videoService, registrar)
 	if err != nil {
 		cleanup()
 		return nil, nil, err

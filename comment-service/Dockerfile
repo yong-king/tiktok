@@ -1,24 +1,26 @@
-FROM golang:1.19 AS builder
+FROM golang:1.24 AS builder
 
-COPY . /src
+#COPY . /src
 WORKDIR /src
 
-RUN GOPROXY=https://goproxy.cn make build
+COPY go.mod go.sum ./
+RUN go mod download
 
-FROM debian:stable-slim
+COPY . .
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-		ca-certificates  \
-        netbase \
-        && rm -rf /var/lib/apt/lists/ \
-        && apt-get autoremove -y && apt-get autoclean -y
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=arm64 go build -o bin/comment-service ./cmd/comment-service
 
-COPY --from=builder /src/bin /app
+FROM alpine:latest
+RUN apk add --no-cache ca-certificates
 
 WORKDIR /app
+COPY --from=builder /src/bin/comment-service /app/comment-service
 
-EXPOSE 8000
-EXPOSE 9000
+COPY configs/ /app/configs
+
+
+EXPOSE 8084
+EXPOSE 9084
 VOLUME /data/conf
 
-CMD ["./server", "-conf", "/data/conf"]
+CMD ["./comment-service", "-conf", "/app/configs/config_doc.yaml"]

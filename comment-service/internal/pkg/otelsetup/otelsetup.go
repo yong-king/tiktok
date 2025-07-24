@@ -1,6 +1,7 @@
 package otelsetup
 
 import (
+	"comment-service/internal/conf"
 	"context"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
@@ -16,7 +17,7 @@ import (
 // InitTracerProvider 初始化并配置全局 OpenTelemetry TraceProvider。
 // ctx: 上下文，用于控制超时和退出。
 // serviceName: 当前服务名，会在可观测平台（如 Jaeger/Tempo）中展示。
-func InitTracerProvider(ctx context.Context, serviceName string) func(context.Context) error {
+func InitTracerProvider(ctx context.Context, serviceName string, cfg *conf.OpenTelemetry) func(context.Context) error {
 	// 定义资源 (Resource)，用于标识服务信息，如 service.name, environment 等。
 	res, err := resource.New(ctx,
 		resource.WithAttributes(
@@ -31,7 +32,7 @@ func InitTracerProvider(ctx context.Context, serviceName string) func(context.Co
 	// 创建 OTLP Trace Exporter，通过 gRPC 将链路数据发送到可观测后端 (Jaeger / Tempo)
 	exporter, err := otlptracegrpc.New(ctx,
 		otlptracegrpc.WithInsecure(),
-		otlptracegrpc.WithEndpoint("localhost:4317"), // Jaeger or Tempo OTLP gRPC endpoint
+		otlptracegrpc.WithEndpoint(cfg.Endpoint), // Jaeger or Tempo OTLP gRPC endpoint
 		otlptracegrpc.WithDialOption(grpc.WithBlock()),
 	)
 	if err != nil {

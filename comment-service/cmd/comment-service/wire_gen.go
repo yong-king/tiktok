@@ -13,7 +13,6 @@ import (
 	"comment-service/internal/pkg"
 	"comment-service/internal/server"
 	"comment-service/internal/service"
-	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 )
@@ -25,14 +24,17 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger, registry *consul.Registry, idGen *conf.IDGen) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger, registry *conf.Registry, idGen *conf.IDGen, openTelemetry *conf.OpenTelemetry) (*kratos.App, func(), error) {
 	db, err := data.NewDB(confData)
 	if err != nil {
 		return nil, nil, err
 	}
 	client := data.NewRedisClient(confData)
+	discovery := data.NewDiscover(registry)
+	userServiceClient := data.NewUserServiceClient(confData, discovery)
+	videoServiceClient := data.NewVideoServiceClient(confData, discovery)
 	idGenerator := pkg.NewIDGen(idGen)
-	dataData, cleanup, err := data.NewData(confData, logger, db, client, registry, idGenerator)
+	dataData, cleanup, err := data.NewData(confData, logger, db, client, userServiceClient, videoServiceClient, idGenerator)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -41,7 +43,8 @@ func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger, re
 	commentService := service.NewCommentService(commentUsecase)
 	grpcServer := server.NewGRPCServer(confServer, commentService, logger)
 	httpServer := server.NewHTTPServer(confServer, commentService, logger)
-	app := newApp(logger, grpcServer, httpServer, registry)
+	registrar := server.NewRegistrar(registry)
+	app := newApp(logger, grpcServer, httpServer, registrar)
 	return app, func() {
 		cleanup()
 	}, nil

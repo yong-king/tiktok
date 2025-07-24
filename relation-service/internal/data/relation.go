@@ -63,6 +63,25 @@ func (r *relationRepo) CreateRelation(ctx context.Context, userID, toUserID int6
 		return err
 	}
 
+	// 事务完成后，同步更新 Redis（最终一致，不影响主流程）
+	go func() {
+		keyFollowing := fmt.Sprintf("user:folloing:%d", userID)
+		keyFollower := fmt.Sprintf("user:folloer:%d", toUserID)
+		relationKey := fmt.Sprintf("relation:%d:%d", userID, toUserID)
+
+		pipe := r.data.rdb.TxPipeline()
+		pipe.SAdd(ctx, keyFollowing, toUserID)
+		pipe.SAdd(ctx, keyFollower, userID)
+		pipe.Set(ctx, relationKey, "1", 24*time.Hour)
+		pipe.Expire(ctx, keyFollowing, 24*time.Hour)
+		pipe.Expire(ctx, keyFollower, 24*time.Hour)
+
+		_, err := pipe.Exec(ctx)
+		if err != nil {
+			r.log.WithContext(ctx).Errorf("pipe.SAdd: %v", err)
+		}
+	}()
+
 	if exist {
 		return r.data.db.Transaction(func(tx *gorm.DB) error {
 			queryTx := query.Use(tx)
@@ -105,26 +124,6 @@ func (r *relationRepo) CreateRelation(ctx context.Context, userID, toUserID int6
 		})
 	}
 
-	// 事务完成后，同步更新 Redis（最终一致，不影响主流程）
-	go func() {
-		keyFollowing := fmt.Sprintf("user:folloing:%d", userID)
-		keyFollower := fmt.Sprintf("user:folloer:%d", toUserID)
-		relationKey := fmt.Sprintf("relation:%d:%d", userID, toUserID)
-
-		pipe := r.data.rdb.TxPipeline()
-		pipe.SAdd(ctx, keyFollowing, toUserID)
-		pipe.SAdd(ctx, keyFollower, userID)
-		pipe.Set(ctx, relationKey, "1", 24*time.Hour)
-		pipe.Expire(ctx, keyFollowing, 24*time.Hour)
-		pipe.Expire(ctx, keyFollower, 24*time.Hour)
-
-		_, err := pipe.Exec(ctx)
-		if err != nil {
-			r.log.WithContext(ctx).Errorf("pipe.SAdd: %v", err)
-		}
-	}()
-
-	return nil
 }
 
 func (r *relationRepo) updateFollowStats(ctx context.Context, tx *gorm.DB, userID, toUserID int64, delta int32) error {

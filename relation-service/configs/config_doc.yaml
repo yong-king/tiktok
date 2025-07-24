@@ -8,20 +8,20 @@ server:
 data:
   database:
     driver: mysql
-    source: root:root@tcp(127.0.0.1:3306)/tiktok?parseTime=True&loc=Local
+    source: root:root@tcp(mysql:3306)/tiktok?parseTime=True&loc=Local
   redis:
-    addr: 127.0.0.1:6379
+    addr: redis:6379
     read_timeout: 0.2s
     write_timeout: 0.2s
   user_service:
     endpoint: discovery:///user-service
 registry:
   consul:
-    addr: 127.0.0.1:8500
+    addr: consul-server:8500
 service:
   name: relation-service
   version: v1.0.0
 elasticsearch:
   addresses:
-    - "http://127.0.0.1:9200"
+    - "elasticsearch:9200"
   index: "tiktok_relation"

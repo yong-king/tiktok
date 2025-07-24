@@ -13,6 +13,7 @@ message Bootstrap {
   Registry registry = 5;
   Service service = 6;
   Elasticsearch elasticsearch = 7;
+  OpenTelemetry open_telemetry = 8;
 }
 
 message Server {
@@ -75,8 +76,13 @@ message IDGen {
 message Registry {
   message Consul {
     string addr = 1;
+    string scheme = 2;
+  }
+  message Advertise {
+      string addr = 1;
   }
   Consul consul = 1;
+  Advertise advertise = 2;
 }
 
 message Service {
@@ -86,4 +92,8 @@ message Service {
 message Elasticsearch{
   repeated string addresses = 1;
   string index = 2;
+}
+
+message OpenTelemetry {
+  string endpoint = 1;
 }

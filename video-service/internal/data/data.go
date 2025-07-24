@@ -5,13 +5,16 @@ import (
 	"errors"
 	"github.com/elastic/go-elasticsearch/v8"
 	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
+	"github.com/go-kratos/kratos/v2/registry"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
+	"github.com/hashicorp/consul/api"
 	"github.com/redis/go-redis/v9"
+	"go.opentelemetry.io/contrib/instrumentation/google.golang.org/grpc/otelgrpc"
+	gogrpc "google.golang.org/grpc"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
 	"strings"
-	"time"
 	"video-service/internal/conf"
 	"video-service/internal/data/query"
 	"video-service/internal/pkg"
@@ -23,7 +26,7 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewVideoRepo, NewDB, NewRedisClient, NewEsClient)
+var ProviderSet = wire.NewSet(NewData, NewVideoRepo, NewDB, NewRedisClient, NewEsClient, NewDiscover, NewUserServiceClient)
 
 // Data .
 type Data struct {
@@ -42,32 +45,49 @@ type Data struct {
 }
 
 // NewData .
-func NewData(c *conf.Data, logger log.Logger, jwt *pkg.JWTManager, upload *pkg.MinioUploader, db *gorm.DB, rdb *redis.Client, idg *pkg.IDGenerator, rr *consul.Registry, esCfg *conf.Elasticsearch, es *elasticsearch.TypedClient) (*Data, func(), error) {
+func NewData(c *conf.Data, logger log.Logger, jwt *pkg.JWTManager, upload *pkg.MinioUploader, db *gorm.DB, rdb *redis.Client, idg *pkg.IDGenerator, cu pbUser.UserServiceClient, esCfg *conf.Elasticsearch, es *elasticsearch.TypedClient) (*Data, func(), error) {
 	cleanup := func() {
 		log.NewHelper(logger).Info("closing the data resources")
 	}
 	query.SetDefault(db)
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-	conn, err := grpc.DialInsecure(
-		ctx,
-		grpc.WithEndpoint(c.UserService.Endpoint),
-		grpc.WithDiscovery(rr),
-	)
-	if err != nil {
-		return nil, nil, err
-	}
 	return &Data{log: log.NewHelper(logger),
 		jwt:     jwt,
 		uploade: upload,
 		db:      db, rdb: rdb,
 		idg:        idg,
 		query:      query.Q,
-		UserClient: pbUser.NewUserServiceClient(conn),
+		UserClient: cu,
 		es:         es,
 		esIndex:    esCfg.Index,
 	}, cleanup, nil
+}
+
+func NewDiscover(cfg *conf.Registry) registry.Discovery {
+	// new consul client
+	c := api.DefaultConfig()
+	c.Address = cfg.Consul.Addr
+	c.Scheme = cfg.Consul.Scheme
+	client, err := api.NewClient(c)
+	if err != nil {
+		panic(err)
+	}
+	// new dis with consul client
+	reg := consul.New(client)
+	return reg
+}
+
+func NewUserServiceClient(c *conf.Data, rr registry.Discovery) pbUser.UserServiceClient {
+	conn, err := grpc.DialInsecure(
+		context.Background(),
+		grpc.WithEndpoint(c.UserService.Endpoint),
+		grpc.WithDiscovery(rr),
+		grpc.WithOptions(gogrpc.WithStatsHandler(otelgrpc.NewClientHandler())),
+	)
+	if err != nil {
+		panic(err)
+	}
+	return pbUser.NewUserServiceClient(conn)
 }
 
 // NewDB 数据库连接

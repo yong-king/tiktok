@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"github.com/elastic/go-elasticsearch/v8"
+	"github.com/go-kratos/kratos/v2/registry"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
+	"github.com/hashicorp/consul/api"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"gorm.io/gorm"
@@ -20,7 +22,7 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewRelationRepo, NewDB, NewRedisClient, NewEsClient)
+var ProviderSet = wire.NewSet(NewData, NewRelationRepo, NewDB, NewRedisClient, NewEsClient, NewDiscover, UserClient)
 
 // Data .
 type Data struct {
@@ -37,19 +39,11 @@ type Data struct {
 }
 
 // NewData .
-func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client, rr *consul.Registry, es *elasticsearch.TypedClient, esCfg *conf.Elasticsearch) (*Data, func(), error) {
+func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client, es *elasticsearch.TypedClient, esCfg *conf.Elasticsearch, cu pbUser.UserServiceClient) (*Data, func(), error) {
 	cleanup := func() {
 		log.NewHelper(logger).Info("closing the data resources")
 	}
 	query.SetDefault(db)
-
-	connUser, err := grpc.DialInsecure(
-		context.Background(),
-		grpc.WithEndpoint(c.UserService.Endpoint),
-		grpc.WithDiscovery(rr))
-	if err != nil {
-		return nil, cleanup, err
-	}
 
 	return &Data{
 		log:        log.NewHelper(logger),
@@ -58,7 +52,7 @@ func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client, rr
 		query:      query.Q,
 		es:         es,
 		esIndex:    esCfg.Index,
-		UserClient: pbUser.NewUserServiceClient(connUser),
+		UserClient: cu,
 	}, cleanup, nil
 }
 
@@ -87,4 +81,27 @@ func NewEsClient(cfg *conf.Elasticsearch) (*elasticsearch.TypedClient, error) {
 		Addresses: cfg.Addresses,
 	}
 	return elasticsearch.NewTypedClient(c)
+}
+
+func NewDiscover(cfg *conf.Registry) registry.Discovery {
+	c := api.DefaultConfig()
+	c.Address = cfg.Consul.Addr
+	c.Scheme = "http"
+	client, err := api.NewClient(c)
+	if err != nil {
+		panic(err)
+	}
+	reg := consul.New(client, consul.WithHealthCheck(true))
+	return reg
+}
+
+func UserClient(c *conf.Data, rr registry.Discovery) pbUser.UserServiceClient {
+	connUser, err := grpc.DialInsecure(
+		context.Background(),
+		grpc.WithEndpoint(c.UserService.Endpoint),
+		grpc.WithDiscovery(rr))
+	if err != nil {
+		panic(err)
+	}
+	return pbUser.NewUserServiceClient(connUser)
 }

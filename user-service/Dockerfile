@@ -19,13 +19,19 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/user-service ./cmd/use
 
 
 
-FROM debian:stable-slim
+#FROM debian:stable-slim
+#
+#RUN apt-get update && apt-get install -y --no-install-recommends \
+#		ca-certificates  \
+#        netbase \
+#        && rm -rf /var/lib/apt/lists/ \
+#        && apt-get autoremove -y && apt-get autoclean -y
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-		ca-certificates  \
-        netbase \
-        && rm -rf /var/lib/apt/lists/ \
-        && apt-get autoremove -y && apt-get autoclean -y
+FROM alpine:latest
+
+RUN apk add --no-cache ca-certificates
+
+WORKDIR /app
 
 #COPY --from=builder /src/bin /app
 # 复制编译好的二进制文件
@@ -36,8 +42,8 @@ COPY configs /app/configs
 
 WORKDIR /app
 
-EXPOSE 8000
-EXPOSE 9000
+EXPOSE 8081
+EXPOSE 9081
 VOLUME /data/conf
 
 CMD ["./user-service", "-conf", "/app/configs/config.yaml"]

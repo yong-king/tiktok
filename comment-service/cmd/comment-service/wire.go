@@ -12,14 +12,12 @@ import (
 	"comment-service/internal/pkg"
 	"comment-service/internal/server"
 	"comment-service/internal/service"
-	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
-
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
 )
 
 // wireApp init kratos application.
-func wireApp(*conf.Server, *conf.Data, log.Logger, *consul.Registry, *conf.IDGen) (*kratos.App, func(), error) {
+func wireApp(*conf.Server, *conf.Data, log.Logger, *conf.Registry, *conf.IDGen, *conf.OpenTelemetry) (*kratos.App, func(), error) {
 	panic(wire.Build(server.ProviderSet, data.ProviderSet, biz.ProviderSet, service.ProviderSet, pkg.ProviderSet, newApp))
 }

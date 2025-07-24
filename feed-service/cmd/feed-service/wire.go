@@ -11,14 +11,12 @@ import (
 	"feed-service/internal/data"
 	"feed-service/internal/server"
 	"feed-service/internal/service"
-	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
-
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 	"github.com/google/wire"
 )
 
 // wireApp init kratos application.
-func wireApp(*conf.Server, *conf.Data, log.Logger, *consul.Registry) (*kratos.App, func(), error) {
+func wireApp(*conf.Server, *conf.Data, log.Logger, *conf.Registry) (*kratos.App, func(), error) {
 	panic(wire.Build(server.ProviderSet, data.ProviderSet, biz.ProviderSet, service.ProviderSet, newApp))
 }

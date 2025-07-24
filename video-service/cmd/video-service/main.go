@@ -4,8 +4,7 @@ import (
 	"context"
 	"flag"
 	"fmt"
-	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
-	"github.com/hashicorp/consul/api"
+	"github.com/go-kratos/kratos/v2/registry"
 	"os"
 	"os/signal"
 	"syscall"
@@ -39,10 +38,10 @@ var (
 )
 
 func init() {
-	flag.StringVar(&flagconf, "conf", "../configs", "config path, eg: -conf config.yaml")
+	flag.StringVar(&flagconf, "conf", "../configs", "config path, eg: -conf config_doc.yaml")
 }
 
-func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, reg *consul.Registry) *kratos.App {
+func newApp(logger log.Logger, gs *grpc.Server, hs *http.Server, reg registry.Registrar) *kratos.App {
 	return kratos.New(
 		kratos.ID(id),
 		kratos.Name(Name),
@@ -62,7 +61,7 @@ func newAppWithService(
 	gs *grpc.Server,
 	hs *http.Server,
 	videoService *service.VideoService,
-	reg *consul.Registry,
+	reg registry.Registrar,
 ) (*kratos.App, func(), error) {
 	// 绑定可供 Gin 使用的全局 VideoService
 	service.BindVideoService(videoService)
@@ -105,17 +104,9 @@ func main() {
 	Version = bc.Service.Version
 	id = fmt.Sprintf("%s-%s", Name, bc.Server.Http.Addr)
 
-	consulCfg := api.DefaultConfig()
-	consulCfg.Address = bc.Registry.Consul.Addr
-	client, err := api.NewClient(consulCfg)
-	if err != nil {
-		panic(err)
-	}
-	reg := consul.New(client)
-
 	// ---------------OpenTelemetry--------------------
 	ctx := context.Background()
-	shutdown := otelsetup.InitTracerProvider(ctx, Name)
+	shutdown := otelsetup.InitTracerProvider(ctx, Name, bc.OpenTelemetry)
 	defer func() {
 		ctx, cancel := context.WithTimeout(ctx, time.Second*5)
 		defer cancel()
@@ -124,7 +115,7 @@ func main() {
 		}
 	}()
 
-	app, cleanup, err := wireApp(bc.Server, bc.Data, logger, bc.Jwt, bc.Data.Minio, bc.IdGen, reg, bc.Elasticsearch)
+	app, cleanup, err := wireApp(bc.Server, bc.Data, logger, bc.Jwt, bc.Data.Minio, bc.IdGen, bc.Registry, bc.Elasticsearch, bc.OpenTelemetry)
 	if err != nil {
 		panic(err)
 	}

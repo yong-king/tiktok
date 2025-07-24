@@ -13,6 +13,7 @@ message Bootstrap {
   Registry registry = 5;
   Service service = 6;
   Log log = 7;
+  OpenTelemetry open_telemetry = 8;
 }
 
 message Service {
@@ -62,12 +63,16 @@ message IDGen {
 }
 
 message Registry {
-  Consul consul = 1;
   message Consul {
     string addr = 1;
+    string scheme = 2;
   }
+  message Advertise {
+    string addr = 1;
+  }
+  Consul consul = 1;
+  Advertise advertise = 2;
 }
-
 message Log {
   string level = 1;
   string path = 2;
@@ -76,4 +81,8 @@ message Log {
   int32 max_age = 5;
   bool compress = 6;
   bool console = 7;
+}
+
+message OpenTelemetry {
+  string endpoint = 1;
 }

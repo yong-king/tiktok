@@ -1,24 +1,37 @@
-FROM golang:1.19 AS builder
+FROM golang:1.24 AS builder
 
-COPY . /src
+
 WORKDIR /src
+COPY go.mod go.sum ./
+RUN go mod download
 
-RUN GOPROXY=https://goproxy.cn make build
+# 复制所有源代码
+COPY . .
 
-FROM debian:stable-slim
+# 构建二进制
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/ralation-service ./cmd/ralation-service
 
-RUN apt-get update && apt-get install -y --no-install-recommends \
-		ca-certificates  \
-        netbase \
-        && rm -rf /var/lib/apt/lists/ \
-        && apt-get autoremove -y && apt-get autoclean -y
 
-COPY --from=builder /src/bin /app
+FROM alpine:latest
+RUN apk add --no-cache ca-certificates
+#
+#RUN apt-get update && apt-get install -y --no-install-recommends \
+#		ca-certificates  \
+#        netbase \
+#        && rm -rf /var/lib/apt/lists/ \
+#        && apt-get autoremove -y && apt-get autoclean -y
+
+WORKDIR /app
+# 复制编译好的二进制文件
+COPY --from=builder /src/bin/ralation-service /app/ralation-service
+
+# 把配置文件也拷贝进去镜像里
+COPY configs/ /app/configs
 
 WORKDIR /app
 
-EXPOSE 8000
-EXPOSE 9000
+EXPOSE 8086
+EXPOSE 9086
 VOLUME /data/conf
 
-CMD ["./server", "-conf", "/data/conf"]
+CMD ["./ralation-service", "-conf", "/app/configs/config_doc.yaml"]

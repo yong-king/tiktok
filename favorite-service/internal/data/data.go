@@ -3,11 +3,13 @@ package data
 import (
 	"context"
 	"errors"
-	pbUSer "favorite-service/api/user/v1"
+	pbUser "favorite-service/api/user/v1"
 	pbVideo "favorite-service/api/video/v1"
 	"favorite-service/internal/conf"
 	"favorite-service/internal/data/query"
+	"github.com/go-kratos/kratos/v2/registry"
 	"github.com/go-kratos/kratos/v2/transport/grpc"
+	"github.com/hashicorp/consul/api"
 	"gorm.io/driver/mysql"
 	"gorm.io/driver/sqlite"
 	"strings"
@@ -21,7 +23,7 @@ import (
 )
 
 // ProviderSet is data providers.
-var ProviderSet = wire.NewSet(NewData, NewFavoriteRepo, NewDB, NewRedisClient)
+var ProviderSet = wire.NewSet(NewData, NewFavoriteRepo, NewDB, NewRedisClient, NewDiscover, NewUserServiceClient, NewVideoServiceClient)
 
 // Data .
 type Data struct {
@@ -31,28 +33,18 @@ type Data struct {
 	rdb   *redis.Client
 	query *query.Query
 
-	UserClient  pbUSer.UserServiceClient
+	UserClient  pbUser.UserServiceClient
 	VideoClient pbVideo.VideoServiceClient
 }
 
 // NewData .
-func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client, rr *consul.Registry) (*Data, func(), error) {
+func NewData(c *conf.Data, logger log.Logger, db *gorm.DB, rdb *redis.Client, cu pbUser.UserServiceClient, cv pbVideo.VideoServiceClient) (*Data, func(), error) {
 	cleanup := func() {
 		log.NewHelper(logger).Info("closing the data resources")
 	}
 	query.SetDefault(db)
 
-	conn1, err := grpc.DialInsecure(context.Background(),
-		grpc.WithEndpoint(c.UserService.Endpoint),
-		grpc.WithDiscovery(rr))
-	if err != nil {
-		return nil, cleanup, err
-	}
-	conn2, err := grpc.DialInsecure(context.Background(),
-		grpc.WithEndpoint(c.VideoService.Endpoint),
-		grpc.WithDiscovery(rr))
-
-	return &Data{log: log.NewHelper(logger), db: db, rdb: rdb, UserClient: pbUSer.NewUserServiceClient(conn1), query: query.Q, VideoClient: pbVideo.NewVideoServiceClient(conn2)}, cleanup, nil
+	return &Data{log: log.NewHelper(logger), db: db, rdb: rdb, UserClient: cu, query: query.Q, VideoClient: cv}, cleanup, nil
 }
 
 // NewDB 数据库连接
@@ -73,4 +65,39 @@ func NewRedisClient(cfg *conf.Data) *redis.Client {
 		WriteTimeout: cfg.Redis.WriteTimeout.AsDuration(),
 		ReadTimeout:  cfg.Redis.ReadTimeout.AsDuration(),
 	})
+}
+
+func NewDiscover(cfg *conf.Registry) registry.Discovery {
+	c := api.DefaultConfig()
+	c.Address = cfg.Consul.Addr
+	c.Scheme = "http"
+	client, err := api.NewClient(c)
+	if err != nil {
+		panic(err)
+	}
+	reg := consul.New(client, consul.WithHealthCheck(true))
+	return reg
+}
+
+func NewUserServiceClient(c *conf.Data, rr registry.Discovery) pbUser.UserServiceClient {
+	connUser, err := grpc.DialInsecure(
+		context.Background(),
+		grpc.WithEndpoint(c.UserService.Endpoint),
+		grpc.WithDiscovery(rr))
+	if err != nil {
+		panic(err)
+	}
+	return pbUser.NewUserServiceClient(connUser)
+}
+
+func NewVideoServiceClient(c *conf.Data, rr registry.Discovery) pbVideo.VideoServiceClient {
+	conn, err := grpc.DialInsecure(
+		context.Background(),
+		grpc.WithEndpoint(c.VideoService.Endpoint),
+		grpc.WithDiscovery(rr),
+	)
+	if err != nil {
+		panic(err)
+	}
+	return pbVideo.NewVideoServiceClient(conn)
 }

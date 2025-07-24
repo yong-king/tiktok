@@ -6,7 +6,6 @@
 package main
 
 import (
-	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
 	"video-service/internal/biz"
 	"video-service/internal/conf"
 	"video-service/internal/data"
@@ -20,6 +19,6 @@ import (
 )
 
 // wireApp init kratos application.
-func wireApp(*conf.Server, *conf.Data, log.Logger, *conf.JWT, *conf.Data_MinIO, *conf.IDGen, *consul.Registry, *conf.Elasticsearch) (*kratos.App, func(), error) {
+func wireApp(*conf.Server, *conf.Data, log.Logger, *conf.JWT, *conf.Data_MinIO, *conf.IDGen, *conf.Registry, *conf.Elasticsearch, *conf.OpenTelemetry) (*kratos.App, func(), error) {
 	panic(wire.Build(server.ProviderSet, data.ProviderSet, biz.ProviderSet, service.ProviderSet, pkg.ProviderSet, newAppWithService))
 }

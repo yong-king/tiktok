@@ -7,7 +7,6 @@
 package main
 
 import (
-	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
 	"github.com/go-kratos/kratos/v2"
 	"github.com/go-kratos/kratos/v2/log"
 	"ralation-service/internal/biz"
@@ -24,7 +23,7 @@ import (
 // Injectors from wire.go:
 
 // wireApp init kratos application.
-func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger, registry *consul.Registry, elasticsearch *conf.Elasticsearch) (*kratos.App, func(), error) {
+func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger, registry *conf.Registry, elasticsearch *conf.Elasticsearch) (*kratos.App, func(), error) {
 	db, err := data.NewDB(confData)
 	if err != nil {
 		return nil, nil, err
@@ -34,7 +33,9 @@ func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger, re
 	if err != nil {
 		return nil, nil, err
 	}
-	dataData, cleanup, err := data.NewData(confData, logger, db, client, registry, typedClient, elasticsearch)
+	discovery := data.NewDiscover(registry)
+	userServiceClient := data.UserClient(confData, discovery)
+	dataData, cleanup, err := data.NewData(confData, logger, db, client, typedClient, elasticsearch, userServiceClient)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -43,7 +44,8 @@ func wireApp(confServer *conf.Server, confData *conf.Data, logger log.Logger, re
 	relationService := service.NewRelationService(relationUsecase)
 	grpcServer := server.NewGRPCServer(confServer, relationService, logger)
 	httpServer := server.NewHTTPServer(confServer, relationService, logger)
-	app := newApp(logger, grpcServer, httpServer, registry)
+	registrar := server.NewRegistrar(registry)
+	app := newApp(logger, grpcServer, httpServer, registrar)
 	return app, func() {
 		cleanup()
 	}, nil

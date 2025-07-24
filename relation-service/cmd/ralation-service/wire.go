@@ -6,7 +6,6 @@
 package main
 
 import (
-	"github.com/go-kratos/kratos/contrib/registry/consul/v2"
 	"ralation-service/internal/biz"
 	"ralation-service/internal/conf"
 	"ralation-service/internal/data"
@@ -19,6 +18,6 @@ import (
 )
 
 // wireApp init kratos application.
-func wireApp(*conf.Server, *conf.Data, log.Logger, *consul.Registry, *conf.Elasticsearch) (*kratos.App, func(), error) {
+func wireApp(*conf.Server, *conf.Data, log.Logger, *conf.Registry, *conf.Elasticsearch) (*kratos.App, func(), error) {
 	panic(wire.Build(server.ProviderSet, data.ProviderSet, biz.ProviderSet, service.ProviderSet, newApp))
 }

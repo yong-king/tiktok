@@ -11,6 +11,7 @@ message Bootstrap {
   Registry registry = 3;
   Service service = 4;
   IDGen idGen = 5;
+  OpenTelemetry open_telemetry = 6;
 }
 
 message Server {
@@ -55,6 +56,7 @@ message Data {
 message Registry {
   message Consul {
     string addr = 1;
+    string scheme = 2;
   }
   Consul consul = 1;
 }
@@ -67,4 +69,8 @@ message Service {
 message IDGen {
   uint32 machine_id = 1;
   string start_time = 2;
+}
+
+message OpenTelemetry {
+  string endpoint = 1;
 }

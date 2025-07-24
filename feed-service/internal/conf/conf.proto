@@ -52,6 +52,7 @@ message Data {
 message Registry {
   message Consul {
     string addr = 1;
+    string scheme = 2;
   }
   Consul consul = 1;
 }
