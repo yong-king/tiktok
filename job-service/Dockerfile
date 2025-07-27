@@ -18,9 +18,16 @@ COPY --from=builder /src/bin/job-service /app/job-service
 
 COPY configs/ /app/configs
 
+COPY start.sh /app/start.sh
+COPY wait-for-it.sh /app/wait-for-it.sh
+
+RUN dos2unix /app/start.sh /app/wait-for-it.sh && \
+    chmod +x /app/start.sh /app/wait-for-it.sh
+
 
 EXPOSE 8087
 EXPOSE 9087
 VOLUME /data/conf
 
-CMD ["./job-service", "-conf", "/app/configs/config_doc.yaml"]
+
+CMD ["./start.sh"]

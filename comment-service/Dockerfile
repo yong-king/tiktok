@@ -18,9 +18,16 @@ COPY --from=builder /src/bin/comment-service /app/comment-service
 
 COPY configs/ /app/configs
 
+COPY start.sh /app/start.sh
+COPY wait-for-it.sh /app/wait-for-it.sh
+
+RUN dos2unix /app/start.sh /app/wait-for-it.sh && \
+    chmod +x /app/start.sh /app/wait-for-it.sh
 
 EXPOSE 8084
 EXPOSE 9084
 VOLUME /data/conf
 
-CMD ["./comment-service", "-conf", "/app/configs/config_doc.yaml"]
+#CMD ["./comment-service", "-conf", "/app/configs/config_doc.yaml"]
+
+CMD ["./start.sh"]

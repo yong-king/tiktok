@@ -28,10 +28,14 @@ COPY --from=builder /src/bin/ralation-service /app/ralation-service
 # 把配置文件也拷贝进去镜像里
 COPY configs/ /app/configs
 
-WORKDIR /app
+COPY start.sh /app/start.sh
+COPY wait-for-it.sh /app/wait-for-it.sh
+RUN dos2unix /app/start.sh /app/wait-for-it.sh && \
+    chmod +x /app/start.sh /app/wait-for-it.sh
 
 EXPOSE 8086
 EXPOSE 9086
 VOLUME /data/conf
 
-CMD ["./ralation-service", "-conf", "/app/configs/config_doc.yaml"]
+
+CMD ["./start.sh"]

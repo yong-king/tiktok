@@ -17,10 +17,15 @@ WORKDIR /app
 COPY --from=builder /src/bin/feed-service /app/feed-service
 
 COPY configs/ /app/configs
+COPY --from=builder /src/start.sh /app/start.sh
+COPY --from=builder /src/wait-for-it.sh /app/wait-for-it.sh
+
+RUN dos2unix /app/start.sh /app/wait-for-it.sh && \
+    chmod +x /app/start.sh /app/wait-for-it.sh
 
 
 EXPOSE 8085
 EXPOSE 9085
 VOLUME /data/conf
 
-CMD ["./feed-service", "-conf", "/app/configs/config_doc.yaml"]
+CMD ["./start.sh"]

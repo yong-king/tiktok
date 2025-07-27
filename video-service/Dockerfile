@@ -16,12 +16,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o bin/video-service ./cmd/vi
 
 FROM alpine:latest
 RUN apk add --no-cache ca-certificates
-#
-#RUN apt-get update && apt-get install -y --no-install-recommends \
-#		ca-certificates  \
-#        netbase \
-#        && rm -rf /var/lib/apt/lists/ \
-#        && apt-get autoremove -y && apt-get autoclean -y
 
 WORKDIR /app
 # 复制编译好的二进制文件
@@ -29,11 +23,15 @@ COPY --from=builder /src/bin/video-service /app/video-service
 
 # 把配置文件也拷贝进去镜像里
 COPY configs/ /app/configs
+COPY start.sh /app/start.sh
+COPY wait-for-it.sh /app/wait-for-it.sh
 
-WORKDIR /app
+RUN dos2unix /app/start.sh /app/wait-for-it.sh && \
+    chmod +x /app/start.sh /app/wait-for-it.sh
 
 EXPOSE 8082
 EXPOSE 9082
 VOLUME /data/conf
 
-CMD ["./video-service", "-conf", "/app/configs/config_doc.yaml"]
+
+CMD ["./start.sh"]

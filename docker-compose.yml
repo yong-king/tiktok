@@ -1,0 +1,354 @@
+networks:
+  tiktok:
+    driver: bridge # 桥接网络,容器在该网络可互相访问,宿主机也可访问容器开放的端口。
+
+# 持久化容器内数据 , Docker 会在默认的 /var/lib/docker/volumes/ 下创建目录存储数据
+volumes:
+  mysql_data:
+  redis_data:
+  minio_data:
+  es_data:
+  prometheus_data:
+  grafana_data:
+  kafka_data:
+
+services:
+#  mysql:
+#    image: mysql:8.0.36
+#    environment:
+#      MYSQL_ROOT_PASSWORD: root
+#      MYSQL_DATABASE: tiktok
+#      TZ: Asia/Shanghai
+#    ports:
+#      - "3306:3306"
+#    volumes:
+#      - ./mysql/my.cnf:/etc/my.cnf
+#      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
+#      - mysql_data:/var/lib/mysql
+#    networks:
+#      - tiktok
+#    healthcheck:
+#      test: ["CMD", "mysql", "-h", "localhost", "-uroot", "-proot", "-e", "SELECT 1 FROM DUAL"]
+#      interval: 10s
+#      timeout: 5s
+#      retries: 5
+#    command: --default-authentication-plugin=mysql_native_password
+
+  mysql:
+    image: mysql:8.0.36
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tiktok
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/my.cnf:/etc/my.cnf
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/1_init.sql
+      - ./mysql/tiktok_backup.sql:/docker-entrypoint-initdb.d/2_tiktok_backup.sql
+      - mysql_data:/var/lib/mysql
+    networks:
+      - tiktok
+    healthcheck:
+      test: [ "CMD", "mysql", "-h", "localhost", "-uroot", "-proot", "-e", "SELECT 1 FROM DUAL" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    command: --default-authentication-plugin=mysql_native_password
+
+
+  redis:
+    image: redis:7.2.4
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - tiktok
+
+  zoo1:
+    image: confluentinc/cp-zookeeper:7.3.2
+    hostname: zoo1
+    container_name: zoo1
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_SERVERS: zoo1:2888:3888
+    networks:
+      - tiktok
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.2
+    hostname: tiktok-kafka
+    container_name: tiktok-kafka    # 👈 固定容器名
+    ports:
+      - "9092:9092"
+      - "19092:19092"
+      - "9999:9999"
+      - "29092:29092"   # 👈 新增，供容器中其他服务（如 Canal）访问"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://tiktok-kafka:19092,EXTERNAL://localhost:9092,DOCKER://host.docker.internal:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: "zoo1:2181"
+      KAFKA_BROKER_ID: 1
+      KAFKA_LOG4J_LOGGERS: "kafka.controller=INFO,kafka.producer.async.DefaultEventHandler=INFO,state.change.logger=INFO"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: ${DOCKER_HOST_IP:-127.0.0.1}
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - zoo1
+      - canal
+    healthcheck:
+      test: [ "CMD-SHELL", "echo > /dev/tcp/localhost/9092" ]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    networks:
+      - tiktok
+
+
+  kafka-ui:
+    container_name: kafka-ui
+    image: provectuslabs/kafka-ui:latest
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    ports:
+      - 18080:8080
+    depends_on:
+      - kafka
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "TRUE"
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: tiktok-kafka:19092
+    networks:
+      - tiktok
+
+  elasticsearch:
+    container_name: elasticsearch
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.1
+    environment:
+      - node.name=elasticsearch
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - 9200:9200
+      - 9300:9300
+    depends_on:
+      - kafka
+    networks:
+      - tiktok
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.9.1
+    container_name: kibana
+    ports:
+      - 5601:5601
+    networks:
+      - tiktok
+    depends_on:
+      - elasticsearch
+
+  canal:
+    image: canal/canal-server:latest
+    environment:
+      canal.instance.master.address: mysql:3306
+      canal.instance.dbUsername: ysh
+      canal.instance.dbPassword: ysh
+      canal.auto.scan: "true"
+    ports:
+      - "11111:11111"
+    networks:
+      - tiktok
+    depends_on:
+      - mysql
+    volumes:
+      - ./canal-conf:/home/admin/canal-server/conf
+
+  minio:
+    image: minio/minio:RELEASE.2023-12-20T01-00-02Z
+    environment:
+      MINIO_ACCESS_KEY: admin
+      MINIO_SECRET_KEY: admin123
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - tiktok
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "19091:9090"          # 与之前保持一致
+    volumes:
+      - ./pkg/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml   # 挂载自定义配置
+      - prometheus_data:/prometheus
+    networks:
+      - tiktok
+
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - tiktok
+
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.55
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"      # UI: http://localhost:16686
+      - "14268:14268"
+      - "14250:14250"
+      - "4317:4317"        # OTLP gRPC
+      - "4318:4318"        # OTLP HTTP
+      - "9411:9411"        # Zipkin HTTP
+    networks:
+      - tiktok
+
+  consul:
+    image: hashicorp/consul:1.18
+    container_name: consul-server
+    command: agent -server -ui -bootstrap -client=0.0.0.0
+    ports:
+      - "8500:8500"
+      - "8600:8600/tcp"
+      - "8600:8600/udp"
+    networks:
+      - tiktok
+
+
+
+  user-service:
+    build:
+      context: ./user-service
+    ports:
+      - "8081:8081"
+      - "9081:9081"
+    depends_on:
+      - mysql
+      - redis
+      - consul
+      - prometheus
+      - jaeger
+    networks:
+      - tiktok
+
+  video-service:
+    build:
+      context: ./video-service
+    ports:
+      - "8082:8082"
+      - "9082:9082"
+    depends_on:
+      - mysql
+      - redis
+      - consul
+      - minio
+      - elasticsearch
+      - user-service
+    networks:
+      - tiktok
+
+  feed-service:
+    build:
+      context: ./feed-service
+    ports:
+      - "8085:8085"
+      - "9085:9085"
+    depends_on:
+      - mysql
+      - redis
+      - consul
+      - user-service
+      - video-service
+      - kafka
+    networks:
+      - tiktok
+
+  job-service:
+    build:
+      context: ./job-service
+    ports:
+      - "8087:8087"
+      - "9087:9087"
+    depends_on:
+      - mysql
+      - canal
+      - kafka
+      - elasticsearch
+    networks:
+      - tiktok
+
+  comment-service:
+    build:
+      context: ./comment-service
+    ports:
+      - "8084:8084"
+      - "9084:9084"
+    depends_on:
+      - mysql
+      - redis
+      - consul
+      - user-service
+      - video-service
+    networks:
+      - tiktok
+
+  favorite-service:
+    build:
+      context: ./favorite-service
+    ports:
+      - "8083:8083"
+      - "9083:9083"
+    depends_on:
+      - mysql
+      - redis
+      - consul
+      - user-service
+      - video-service
+    networks:
+      - tiktok
+
+  relation-service:
+    build:
+      context: ./relation-service
+    ports:
+      - "8086:8086"
+      - "9086:9086"
+    depends_on:
+      - mysql
+      - redis
+      - consul
+      - user-service
+      - elasticsearch
+    networks:
+      - tiktok

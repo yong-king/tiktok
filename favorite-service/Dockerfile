@@ -19,8 +19,14 @@ COPY --from=builder /src/bin/favorite-service /app/favorite-service
 COPY configs/ /app/configs
 
 
+COPY start.sh /app/start.sh
+COPY wait-for-it.sh /app/wait-for-it.sh
+
+RUN dos2unix /app/start.sh /app/wait-for-it.sh && \
+    chmod +x /app/start.sh /app/wait-for-it.sh
+
 EXPOSE 8083
 EXPOSE 9083
 VOLUME /data/conf
 
-CMD ["./favorite-service", "-conf", "/app/configs/config_doc.yaml"]
+CMD ["./start.sh"]

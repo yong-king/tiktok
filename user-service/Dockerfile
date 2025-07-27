@@ -39,6 +39,13 @@ COPY --from=builder /src/bin/user-service /app/user-service
 
 # 把配置文件也拷贝进去镜像里
 COPY configs /app/configs
+COPY start.sh /app/start.sh
+COPY wait-for-it.sh /app/wait-for-it.sh
+
+
+# ✅ 转换换行符（Windows ➜ Linux），并添加执行权限
+RUN dos2unix /app/start.sh /app/wait-for-it.sh && \
+    chmod +x /app/start.sh /app/wait-for-it.sh
 
 WORKDIR /app
 
@@ -46,4 +53,4 @@ EXPOSE 8081
 EXPOSE 9081
 VOLUME /data/conf
 
-CMD ["./user-service", "-conf", "/app/configs/config.yaml"]
+CMD ["./start.sh"]
