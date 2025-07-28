@@ -16,7 +16,7 @@ data:
 
 elasticsearch:
   addresses:
-    - "elasticsearch:9200"
+    - "http://elasticsearch:9200"
   indices:
     - topic: "tiktok_users"
       index: "tiktok_users"
@@ -27,7 +27,7 @@ elasticsearch:
 
 kafka:
   brokers:
-    - "kafka:9092"
+    - "kafka:19092"
   group_id: "tiktok_sync_group"
   topics:
     - "tiktok_users"

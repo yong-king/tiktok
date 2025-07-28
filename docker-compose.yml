@@ -13,26 +13,6 @@ volumes:
   kafka_data:
 
 services:
-#  mysql:
-#    image: mysql:8.0.36
-#    environment:
-#      MYSQL_ROOT_PASSWORD: root
-#      MYSQL_DATABASE: tiktok
-#      TZ: Asia/Shanghai
-#    ports:
-#      - "3306:3306"
-#    volumes:
-#      - ./mysql/my.cnf:/etc/my.cnf
-#      - ./mysql/init.sql:/docker-entrypoint-initdb.d/init.sql
-#      - mysql_data:/var/lib/mysql
-#    networks:
-#      - tiktok
-#    healthcheck:
-#      test: ["CMD", "mysql", "-h", "localhost", "-uroot", "-proot", "-e", "SELECT 1 FROM DUAL"]
-#      interval: 10s
-#      timeout: 5s
-#      retries: 5
-#    command: --default-authentication-plugin=mysql_native_password
 
   mysql:
     image: mysql:8.0.36
@@ -55,7 +35,7 @@ services:
       timeout: 5s
       retries: 5
       start_period: 30s
-    command: --default-authentication-plugin=mysql_native_password
+    command: --default-authentication-plugin=caching_sha2_password
 
 
   redis:
@@ -88,10 +68,9 @@ services:
       - "9092:9092"
       - "19092:19092"
       - "9999:9999"
-      - "29092:29092"   # 👈 新增，供容器中其他服务（如 Canal）访问"
     environment:
-      KAFKA_ADVERTISED_LISTENERS: INTERNAL://tiktok-kafka:19092,EXTERNAL://localhost:9092,DOCKER://host.docker.internal:29092
-      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,DOCKER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://tiktok-kafka:19092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
       KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_ZOOKEEPER_CONNECT: "zoo1:2181"
       KAFKA_BROKER_ID: 1
@@ -268,6 +247,7 @@ services:
     ports:
       - "8082:8082"
       - "9082:9082"
+      - "8090:8090"
     depends_on:
       - mysql
       - redis
@@ -301,8 +281,6 @@ services:
       - "8087:8087"
       - "9087:9087"
     depends_on:
-      - mysql
-      - canal
       - kafka
       - elasticsearch
     networks:
