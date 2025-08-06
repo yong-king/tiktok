@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: canal
+  namespace: tiktok
+spec:
+  selector:
+    app: canal
+  ports:
+    - name: tcp
+      port: 11111
+      targetPort: 11111
+      protocol: TCP
+  type: ClusterIP  # 或 NodePort 如果你想从集群外访问
+

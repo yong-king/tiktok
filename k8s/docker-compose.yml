@@ -1,0 +1,246 @@
+version: '3'
+services:
+  mysql:
+    image: mysql:8.0.36
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: tiktok
+      TZ: Asia/Shanghai
+    ports:
+      - "3306:3306"
+    volumes:
+      - ./mysql/my.cnf:/etc/my.cnf
+      - ./mysql/init.sql:/docker-entrypoint-initdb.d/1_init.sql
+      - ./mysql/tiktok_backup.sql:/docker-entrypoint-initdb.d/2_tiktok_backup.sql
+      - mysql_data:/var/lib/mysql
+    command: --default-authentication-plugin=caching_sha2_password
+
+  redis:
+    image: redis:7.2.4
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+
+  zoo1:
+    image: confluentinc/cp-zookeeper:7.3.2
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_SERVER_ID: 1
+      ZOOKEEPER_SERVERS: zoo1:2888:3888
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.2
+    ports:
+      - "9092:9092"
+      - "19092:19092"
+      - "9999:9999"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://tiktok-kafka:19092,EXTERNAL://192.168.198.100:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: "zoo1:2181"
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_JMX_PORT: 9999
+      KAFKA_JMX_HOSTNAME: 127.0.0.1
+      KAFKA_AUTHORIZER_CLASS_NAME: kafka.security.authorizer.AclAuthorizer
+      KAFKA_ALLOW_EVERYONE_IF_NO_ACL_FOUND: "true"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    depends_on:
+      - zoo1
+
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    ports:
+      - "18080:8080"
+    depends_on:
+      - kafka
+    environment:
+      DYNAMIC_CONFIG_ENABLED: "true"
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: tiktok-kafka:19092
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.9.1
+    environment:
+      - node.name=elasticsearch
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  kibana:
+    image: docker.elastic.co/kibana/kibana:8.9.1
+    ports:
+      - "5601:5601"
+    depends_on:
+      - elasticsearch
+
+  canal:
+    image: canal/canal-server:latest
+    environment:
+      canal.instance.master.address: mysql:3306
+      canal.instance.dbUsername: ysh
+      canal.instance.dbPassword: ysh
+      canal.auto.scan: "true"
+    ports:
+      - "11111:11111"
+    depends_on:
+      - mysql
+    volumes:
+      - ./canal-conf:/home/admin/canal-server/conf
+
+  minio:
+    image: minio/minio:RELEASE.2023-12-20T01-00-02Z
+    environment:
+      MINIO_ACCESS_KEY: admin
+      MINIO_SECRET_KEY: admin123
+    command: server /data --console-address ":9001"
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+
+  prometheus:
+    image: prom/prometheus:latest
+    ports:
+      - "19091:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.55
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+      - COLLECTOR_ZIPKIN_HTTP_PORT=9411
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "4317:4317"
+      - "4318:4318"
+      - "9411:9411"
+
+  consul:
+    image: hashicorp/consul:1.18
+    command: agent -server -ui -bootstrap -client=0.0.0.0
+    ports:
+      - "8500:8500"
+      - "8600:8600/tcp"
+      - "8600:8600/udp"
+
+  user-service:
+    image: youngking666/user-service:latest
+    ports:
+      - "8081:8081"
+      - "9081:9081"
+    depends_on:
+      - mysql
+      - redis
+      - consul
+
+  video-service:
+    image: youngking666/video-service:latest
+    ports:
+      - "8082:8082"
+      - "9082:9082"
+      - "8090:8090"
+    depends_on:
+      - mysql
+      - redis
+      - consul
+      - minio
+      - elasticsearch
+      - user-service
+
+  feed-service:
+    image: youngking666/feed-service:latest
+    ports:
+      - "8085:8085"
+      - "9085:9085"
+    depends_on:
+      - mysql
+      - redis
+      - consul
+      - user-service
+      - video-service
+      - kafka
+
+  job-service:
+    image: youngking666/job-service:latest
+    ports:
+      - "8087:8087"
+      - "9087:9087"
+    depends_on:
+      - kafka
+      - elasticsearch
+
+  comment-service:
+    image: youngking666/comment-service:latest
+    ports:
+      - "8084:8084"
+      - "9084:9084"
+    depends_on:
+      - mysql
+      - redis
+      - consul
+      - user-service
+      - video-service
+
+  favorite-service:
+    image: youngking666/favorite-service:latest
+    ports:
+      - "8083:8083"
+      - "9083:9083"
+    depends_on:
+      - mysql
+      - redis
+      - consul
+      - user-service
+      - video-service
+
+  relation-service:
+    image: youngking666/relation-service:latest
+    ports:
+      - "8086:8086"
+      - "9086:9086"
+    depends_on:
+      - mysql
+      - redis
+      - consul
+      - user-service
+      - elasticsearch
+
+volumes:
+  mysql_data:
+  redis_data:
+  minio_data:
+  es_data:
+  prometheus_data:
+  grafana_data:
+  kafka_data:

@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: tiktok
+spec:
+  type: NodePort   # 如果你需要外部访问 Redis，可设为 NodePort
+  selector:
+    app: redis
+  ports:
+    - port: 6379
+      targetPort: 6379
+      nodePort: 30379  # 可选暴露端口，外部访问可用
+

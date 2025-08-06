@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kibana
+  namespace: tiktok
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kibana
+  template:
+    metadata:
+      labels:
+        app: kibana
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: node2 
+      initContainers:
+        - name: wait-for-es
+          image: busybox:1.35
+          command: ['sh', '-c', 'until nc -z elasticsearch 9200; do echo waiting for elasticsearch; sleep 2; done']
+      containers:
+        - name: kibana
+          image: docker.elastic.co/kibana/kibana:8.9.1
+          ports:
+            - containerPort: 5601
+

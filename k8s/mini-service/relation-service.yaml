@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: relation-service
+  namespace: tiktok
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: relation-service
+  template:
+    metadata:
+      labels:
+        app: relation-service
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: node1
+      containers:
+        - name: relation-service
+          image: youngking666/relation-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8086
+            - containerPort: 9086
+          env:
+            - name: VIDEO_USER_HOST
+              value: http://user-service.tiktok.svc.cluster.local
+      initContainers:
+        - name: wait-for-video
+          image: busybox:1.35
+          command: ['sh', '-c', 'until nc -z user-service.tiktok.svc.cluster.local 8081; do echo waiting for user-service; sleep 2; done']
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: relation-service
+  namespace: tiktok
+spec:
+  selector:
+    app: relation-service
+  type: NodePort
+  ports:
+    - name: http-8086
+      port: 8086
+      targetPort: 8086
+      nodePort: 30886
+    - name: metrics-9086
+      port: 9086
+      targetPort: 9086
+

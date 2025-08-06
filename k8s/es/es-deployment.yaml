@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elasticsearch
+  namespace: tiktok
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: node2
+      initContainers:
+      - name: wait-for-kafka
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z kafka 19092; do echo waiting for kafka; sleep 2; done']
+      containers:
+      - name: elasticsearch
+        image: docker.elastic.co/elasticsearch/elasticsearch:7.17.10
+        ports:
+        - containerPort: 9200
+        - containerPort: 9300
+        env:
+        - name: discovery.type
+          value: single-node
+        - name: ES_JAVA_OPTS
+          value: "-Xms256m -Xmx256m"
+        - name: xpack.security.enabled
+          value: "false"
+        resources:
+          requests:
+            memory: "512Mi"               # 请求512MB内存
+            cpu: "250m"                  # 请求0.25个CPU
+          limits:
+            memory: "768Mi"              # 限制最大768MB内存
+            cpu: "500m"                  # 限制最大0.5个CPU
+        volumeMounts:
+          - name: es-data
+            mountPath: /usr/share/elasticsearch/data
+      volumes:
+      - name: es-data
+        persistentVolumeClaim:
+          claimName: es-pvc
+

@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: video-service
+  namespace: tiktok
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: video-service
+  template:
+    metadata:
+      labels:
+        app: video-service
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: node1  # 限定部署到 node1 节点
+      initContainers:
+      - name: wait-for-minio
+        image: busybox
+        imagePullPolicy: IfNotPresent
+        command: ['sh', '-c', 'until nc -z minio.tiktok.svc.cluster.local 9000; do echo waiting for minio; sleep 2; done;']
+      - name: wait-for-user
+        image: busybox
+        command: ['sh', '-c', 'until nc -z user-service.tiktok.svc.cluster.local 8081; do echo waiting for user-service; sleep 2; done;']
+      containers:
+      - name: video-service
+        image: youngking666/video-service:latest  # 这里改成你构建后推送的镜像地址
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8082
+        - containerPort: 9082
+        - containerPort: 8090
+        env:
+        - name: MYSQL_HOST
+          value: mysql.tiktok.svc.cluster.local
+        - name: REDIS_HOST
+          value: redis.tiktok.svc.cluster.local
+        - name: MINIO_ENDPOINT
+          value: minio.tiktok.svc.cluster.local:9000
+        - name: ELASTICSEARCH_HOST
+          value: elasticsearch.tiktok.svc.cluster.local
+        - name: CONSUL_HOST
+          value: consul.tiktok.svc.cluster.local
+        - name: USER_SERVICE_HOST
+          value: user-service.tiktok.svc.cluster.local
+      restartPolicy: Always
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: video-service
+  namespace: tiktok
+spec:
+  selector:
+    app: video-service
+  type: NodePort
+  ports:
+  - name: http-8082
+    port: 8082
+    targetPort: 8082
+    nodePort: 30882
+  - name: grpc-9082
+    port: 9082
+    targetPort: 9082
+    nodePort: 30982
+  - name: gin-8090
+    port: 8090
+    targetPort: 8090
+    nodePort: 30890
+

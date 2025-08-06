@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: telegraf
+  namespace: tiktok
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: telegraf
+  template:
+    metadata:
+      labels:
+        app: telegraf
+    spec:
+      initContainers:
+      - name: wait-for-mysql
+        image: busybox:1.35
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z mysql.tiktok.svc.cluster.local 3306; do echo "waiting for mysql..."; sleep 3; done
+      containers:
+      - name: telegraf
+        image: telegraf:1.28
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 9273
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/telegraf/telegraf.conf
+          subPath: telegraf.conf
+      volumes:
+      - name: config-volume
+        configMap:
+          name: telegraf-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: telegraf
+  namespace: tiktok
+spec:
+  selector:
+    app: telegraf
+  ports:
+  - port: 9273
+    targetPort: 9273
+    protocol: TCP

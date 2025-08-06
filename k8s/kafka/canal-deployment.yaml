@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: canal
+  namespace: tiktok
+  labels:
+    app: canal
+spec:
+  replicas: 1  # 只部署一个实例
+  selector:
+    matchLabels:
+      app: canal
+  template:
+    metadata:
+      labels:
+        app: canal
+    spec:
+      initContainers:
+      - name: wait-for-mysql
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z mysql 3306; do echo waiting for mysql; sleep 2; done']
+      - name: wait-for-kafka
+        image: busybox:1.35
+        command: ['sh', '-c', 'until nc -z kafka 19092; do echo waiting for kafka; sleep 2; done']
+      nodeSelector:
+        kubernetes.io/hostname: node2  # 保证 Pod 被调度到 node2
+      containers:
+        - name: canal
+          image: canal/canal-server:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 11111  # 默认 Canal Server 的 TCP 端口
+          env:
+            - name: canal.instance.master.address
+              value: "mysql:3306"  # 与你 MySQL 的 service 名一致
+            - name: canal.instance.dbUsername
+              value: "ysh"
+            - name: canal.instance.dbPassword
+              value: "ysh"
+            - name: canal.auto.scan
+              value: "true"
+          volumeMounts:
+            - name: canal-conf
+              mountPath: /home/admin/canal-server/conf
+
+      volumes:
+        - name: canal-conf
+          hostPath:
+            path: /data/canal/canal-conf  # node2 上的配置目录
+            type: Directory

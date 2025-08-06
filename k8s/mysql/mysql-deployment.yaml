@@ -1,0 +1,51 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+  namespace: tiktok
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mysql
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: node2
+      containers:
+        - name: mysql
+          image: mysql:8.0.36
+          ports:
+            - containerPort: 3306
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: root
+            - name: MYSQL_DATABASE
+              value: tiktok
+            - name: TZ
+              value: Asia/Shanghai
+          volumeMounts:
+            - name: config
+              mountPath: /etc/my.cnf
+              subPath: my.cnf
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d/1_init.sql
+              subPath: 1_init.sql
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d/2_tiktok_backup.sql
+              subPath: 2_tiktok_backup.sql
+            - name: mysql-data
+              mountPath: /var/lib/mysql
+      volumes:
+        - name: config
+          configMap:
+            name: mysql-config
+        - name: init-sql
+          configMap:
+            name: mysql-init-sql
+        - name: mysql-data
+          persistentVolumeClaim:
+            claimName: mysql-pvc

@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: tiktok
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      initContainers:
+      - name: wait-for-dependencies
+        image: busybox:1.35
+        imagePullPolicy: IfNotPresent
+        command:
+          - sh
+          - -c
+          - |
+            until nc -z mysql.tiktok.svc.cluster.local 3306; do echo "waiting mysql"; sleep 3; done;
+            until nc -z redis.tiktok.svc.cluster.local 6379; do echo "waiting redis"; sleep 3; done;
+            until nc -z prometheus.tiktok.svc.cluster.local 9090; do echo "waiting prometheus"; sleep 3; done;
+            until nc -z elasticsearch.tiktok.svc.cluster.local 9200; do echo "waiting elasticsearch"; sleep 3; done;
+      containers:
+      - name: user-service
+        image: youngking666/user-service:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 8081
+        - containerPort: 9081
+        - containerPort: 18081
+        env:
+        - name: MYSQL_HOST
+          value: mysql.tiktok.svc.cluster.local
+        - name: REDIS_HOST
+          value: redis.tiktok.svc.cluster.local
+        - name: PROMETHEUS_HOST
+          value: prometheus.tiktok.svc.cluster.local
+        - name: ELASTICSEARCH_HOST
+          value: elasticsearch.tiktok.svc.cluster.local
+        - name: CONSUL_HOST
+          value: consul-server.tiktok.svc.cluster.local
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: tiktok
+spec:
+  selector:
+    app: user-service
+  ports:
+    - name: http
+      port: 8081
+      targetPort: 8081
+      protocol: TCP
+      nodePort: 30081
+    - name: grpc
+      port: 9081
+      targetPort: 9081
+      protocol: TCP
+    - name: metrucs
+      port: 18081
+      targetPort: 18081
+      protocol: TCP
+  type: NodePort
+

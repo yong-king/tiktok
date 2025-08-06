@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: favorite-service
+  namespace: tiktok
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: favorite-service
+  template:
+    metadata:
+      labels:
+        app: favorite-service
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: node1
+      containers:
+        - name: favorite-service
+          image: youngking666/favorite-service:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8083
+            - containerPort: 9083
+          env:
+            - name: VIDEO_SERVICE_HOST
+              value: http://video-service.tiktok.svc.cluster.local
+      initContainers:
+        - name: wait-for-video
+          image: busybox:1.35
+          command: ['sh', '-c', 'until nc -z video-service.tiktok.svc.cluster.local 8082; do echo waiting for video-service; sleep 2; done']
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: favorite-service
+  namespace: tiktok
+spec:
+  selector:
+    app: favorite-service
+  type: NodePort
+  ports:
+    - name: http-8083
+      port: 8083
+      targetPort: 8083
+      nodePort: 30883
+    - name: metrics-9083
+      port: 9083
+      targetPort: 9083
+

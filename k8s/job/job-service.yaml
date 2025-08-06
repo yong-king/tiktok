@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: job-service
+  namespace: tiktok
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: job-service
+  template:
+    metadata:
+      labels:
+        app: job-service
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: node1 # 运行在节点1
+      containers:
+        - name: job-service
+          image: youngking666/job-service:latest  
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8087
+            - containerPort: 9087
+          env:
+            - name: KAFKA_BOOTSTRAP_SERVERS
+              value: kafka.tiktok.svc.cluster.local:19092
+            - name: ELASTICSEARCH_URL
+              value: http://elasticsearch.tiktok.svc.cluster.local:9200
+      initContainers:
+        - name: wait-for-kafka
+          image: busybox:1.35
+          imagePullPolicy: IfNotPresent
+          command: ['sh', '-c', 'until nc -z kafka.tiktok.svc.cluster.local 19092; do echo "waiting for kafka"; sleep 2; done;']
+        - name: wait-for-es
+          image: busybox:1.35
+          imagePullPolicy: IfNotPresent
+          command: ['sh', '-c', 'until nc -z elasticsearch.tiktok.svc.cluster.local 9200; do echo "waiting for elasticsearch"; sleep 2; done;']
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: job-service
+  namespace: tiktok
+spec:
+  type: NodePort
+  selector:
+    app: job-service
+  ports:
+    - name: http
+      port: 8087
+      targetPort: 8087
+      nodePort: 30887
+    - name: metrics
+      port: 9087
+      targetPort: 9087
+      nodePort: 31887

@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: zoo1
+  namespace: tiktok  # 命名空间
+spec:
+  replicas: 1  # 部署1个实例
+  selector:
+    matchLabels:
+      app: zookeeper
+  template:
+    metadata:
+      labels:
+        app: zookeeper  # pod标签
+    spec:
+      containers:
+        - name: zookeeper
+          image: confluentinc/cp-zookeeper:7.3.2  # 镜像版本
+          ports:
+            - containerPort: 2181  # zk客户端端口
+          env:
+            - name: ZOOKEEPER_CLIENT_PORT
+              value: "2181"
+            - name: ZOOKEEPER_SERVER_ID
+              value: "1"
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: zoo1
+  namespace: tiktok
+spec:
+  selector:
+    app: zookeeper  # 选择上面Deployment的pod
+  ports:
+    - protocol: TCP
+      port: 2181  # 集群内部访问的端口
+      targetPort: 2181
+  type: ClusterIP  # 集群内部访问服务
+
