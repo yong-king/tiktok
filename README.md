@@ -8,7 +8,8 @@
 
 部署到k8s集群，基于peometheus+grafnan监控
 
-![9065478c8148927cd5b24e5af51b4271](D:\save\xwechat_files\wxid_w7xuxbjc51fn22_63ab\temp\RWTemp\2025-08\9e20f478899dc29eb19741386f9343c8\9065478c8148927cd5b24e5af51b4271.png)
+<img width="2214" height="1132" alt="image" src="https://github.com/user-attachments/assets/3b887f7d-aeef-434e-87e9-37edbe39d0ac" />
+
 
 1.2 项目运行
 
