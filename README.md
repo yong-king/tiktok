@@ -135,7 +135,8 @@ make build
 
 ## 五、框架
 
-![image-20250807180502943](C:\Users\10849\AppData\Roaming\Typora\typora-user-images\image-20250807180502943.png)
+<img width="1862" height="1115" alt="image" src="https://github.com/user-attachments/assets/5a89d753-1b8d-4e9e-b478-84df60ab3fb7" />
+
 
 1. user微服务
 
